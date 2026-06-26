@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NephroBreath · ตรวจไตจากลมหายใจ</title>
+<meta name="theme-color" content="#1F4B3C">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --ink:#20302A;
+  --cream:#FBF7EF;
+  --paper:#FFFFFF;
+  --sage:#EAF0E7;
+  --forest:#1F4B3C;
+  --forest-light:#3D7A63;
+  --clay:#D97B56;
+  --clay-bg:#FBE9E0;
+  --gold:#C8932E;
+  --gold-bg:#FBF1DC;
+  --mist:#DCE7E0;
+  --muted:#5E6F67;
+
+  --display: 'Fraunces', Georgia, serif;
+  --body: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:var(--body);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+button{font-family:inherit;}
+::selection{background:var(--sage);}
+
+/* ---------- Shell ---------- */
+.shell{
+  max-width:1080px;
+  margin:0 auto;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px 20px 14px;
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:linear-gradient(180deg, var(--cream) 70%, rgba(251,247,239,0));
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:11px;
+  background:var(--forest);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.brand-mark svg{width:18px;height:18px;}
+.brand-name{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:19px;
+  line-height:1;
+  color:var(--forest);
+}
+.brand-sub{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:2px;
+}
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--paper);
+  border:1px solid var(--mist);
+  border-radius:999px;
+  padding:6px 12px 6px 10px;
+  font-size:12px;
+  color:var(--muted);
+  font-family:var(--mono);
+  cursor:pointer;
+  transition:background .2s;
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#C7493B;}
+.status-pill.connected .status-dot{background:var(--forest-light);}
+
+/* ---------- Layout: main + desktop sidebar ---------- */
+.body-row{
+  flex:1;
+  display:flex;
+  width:100%;
+}
+.sidebar{
+  display:none;
+}
+main{
+  flex:1;
+  padding:4px 20px 110px;
+  width:100%;
+}
+
+@media (min-width:860px){
+  .topbar{padding:26px 32px 18px;}
+  main{padding:8px 32px 60px;}
+  .body-row{gap:28px;}
+  .sidebar{
+    display:flex;
+    flex-direction:column;
+    width:220px;
+    padding:18px 12px 24px;
+    gap:4px;
+  }
+  .bottomnav{display:none !important;}
+}
+
+/* ---------- Cards ---------- */
+.card{
+  background:var(--paper);
+  border-radius:var(--r-md);
+  border:1px solid var(--mist);
+}
+.section-title{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:15px;
+  letter-spacing:.02em;
+  color:var(--forest);
+  margin:28px 2px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.section-title .link{
+  font-family:var(--body);
+  font-weight:500;
+  font-size:13px;
+  color:var(--forest-light);
+  cursor:pointer;
+}
+
+/* ---------- Hero / breathing ring ---------- */
+.hero{
+  padding:30px 22px 26px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero-greeting{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:2px;
+}
+.hero-name{
+  font-family:var(--display);
+  font-size:22px;
+  font-weight:600;
+  margin-bottom:18px;
+}
+.ring-wrap{
+  position:relative;
+  width:188px;height:188px;
+  margin:0 auto 14px;
+}
+.ring-wrap svg{width:100%;height:100%;}
+.ring-bg{fill:none;stroke:var(--sage);stroke-width:10;}
+.ring-fg{fill:none;stroke-width:10;stroke-linecap:round;transform-origin:50% 50%;transform:rotate(-90deg);transition:stroke .4s;}
+.ring-pulse{
+  fill:none;
+  stroke-width:1.5;
+  opacity:.5;
+  animation:breathe 4.4s ease-in-out infinite;
+  transform-origin:50% 50%;
+}
+@keyframes breathe{
+  0%{transform:scale(.86);opacity:.55;}
+  50%{transform:scale(1.06);opacity:.12;}
+  100%{transform:scale(.86);opacity:.55;}
+}
+.ring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.ring-status-label{
+  font-size:11.5px;
+  letter-spacing:.04em;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.ring-status-value{
+  font-family:var(--display);
+  font-size:21px;
+  font-weight:600;
+  margin-top:3px;
+  max-width:120px;
+  line-height:1.15;
+}
+.hero-meta{
+  font-size:12.5px;
+  color:var(--muted);
+  margin-top:4px;
+}
+.hero-cta{
+  margin-top:20px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+  border:none;
+  border-radius:14px;
+  padding:13px 20px;
+  font-size:14.5px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:transform .15s, box-shadow .15s, background .2s;
+  font-family:var(--body);
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{
+  background:var(--forest);
+  color:#fff;
+  box-shadow:0 8px 20px -8px rgba(31,75,60,.55);
+}
+.btn-primary:hover{background:#193e32;}
+.btn-ghost{
+  background:var(--paper);
+  color:var(--forest);
+  border:1px solid var(--mist);
+}
+.btn-ghost:hover{background:var(--sage);}
+.btn-block{width:100%;justify-content:center;}
+.btn-sm{padding:9px 14px;font-size:13px;border-radius:11px;}
+.btn-danger{color:#B14B36;}
+
+/* ---------- Quick stats row ---------- */
+.stat-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:18px;
+}
+.stat-card{
+  padding:14px 16px;
+  border-radius:var(--r-sm);
+}
+.stat-label{
+  font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.stat-value{
+  font-family:var(--mono);
+  font-size:19px;
+  font-weight:500;
+  margin-top:4px;
+  color:var(--forest);
+}
+.stat-unit{font-size:11px;color:var(--muted);font-family:var(--body);}
+
+/* ---------- Disclaimer ---------- */
+.disclaimer{
+  background:var(--gold-bg);
+  border:1px solid #ECD9AE;
+  border-radius:var(--r-sm);
+  padding:13px 15px;
+  font-size:12.5px;
+  color:#6B4F1E;
+  margin-top:16px;
+  line-height:1.5;
+}
+.disclaimer b{color:#5A4115;}
+
+/* ---------- Sparkline / trend card ---------- */
+.trend-card{padding:18px;}
+.trend-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.trend-head .t1{font-size:13px;color:var(--muted);}
+.trend-head .t2{font-family:var(--mono);font-size:13px;color:var(--forest-light);}
+
+/* ---------- List items (history) ---------- */
+.list{display:flex;flex-direction:column;gap:8px;}
+.list-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 15px;
+  border-radius:var(--r-sm);
+}
+.li-left{display:flex;align-items:center;gap:11px;}
+.li-tag{
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
+}
+.li-date{font-size:13.5px;font-weight:500;}
+.li-sub{font-size:11.5px;color:var(--muted);margin-top:1px;}
+.li-value{font-family:var(--mono);font-size:14px;color:var(--forest);text-align:right;}
+.li-status{font-size:11px;color:var(--muted);text-align:right;}
+
+/* ---------- empty state ---------- */
+.empty{
+  text-align:center;
+  padding:50px 24px;
+  color:var(--muted);
+}
+.empty-icon{
+  width:54px;height:54px;border-radius:16px;
+  background:var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;
+}
+.empty h3{font-family:var(--display);color:var(--ink);margin:0 0 6px;font-size:17px;font-weight:600;}
+.empty p{margin:0 0 18px;font-size:13.5px;}
+
+/* ---------- Bottom nav ---------- */
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;
+  max-width:1080px;margin:0 auto;
+  background:rgba(251,247,239,.92);
+  backdrop-filter:blur(10px);
+  border-top:1px solid var(--mist);
+  display:flex;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  z-index:30;
+}
+.nav-btn{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:none;cursor:pointer;
+  padding:6px 0;
+  color:var(--muted);
+}
+.nav-btn svg{width:21px;height:21px;}
+.nav-btn span{font-size:10.5px;font-weight:500;}
+.nav-btn.active{color:var(--forest);}
+
+/* desktop sidebar nav */
+.side-btn{
+  display:flex;align-items:center;gap:11px;
+  padding:11px 14px;
+  border-radius:12px;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:14px;font-weight:500;
+  border:none;background:none;
+  text-align:left;
+}
+.side-btn svg{width:18px;height:18px;flex-shrink:0;}
+.side-btn.active{background:var(--sage);color:var(--forest);}
+.side-btn:hover:not(.active){background:rgba(0,0,0,.03);}
+
+/* ---------- Views ---------- */
+.view{display:none;animation:fadein .25s ease;}
+.view.active{display:block;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- Reading flow ---------- */
+.flow-stage{
+  padding:38px 22px 30px;
+  text-align:center;
+}
+.flow-title{font-family:var(--display);font-size:19px;font-weight:600;margin-bottom:6px;}
+.flow-sub{font-size:13.5px;color:var(--muted);margin-bottom:28px;line-height:1.5;}
+.big-ring-wrap{width:220px;height:220px;margin:0 auto 26px;position:relative;}
+.big-ring-wrap svg{width:100%;height:100%;}
+.countdown{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.countdown .n{font-family:var(--display);font-size:46px;font-weight:600;color:var(--forest);}
+.countdown .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.result-banner{
+  border-radius:var(--r-md);
+  padding:24px 20px;
+  margin-bottom:18px;
+}
+.result-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.result-status{font-family:var(--display);font-size:20px;font-weight:600;margin-bottom:6px;}
+.result-detail{font-size:13px;color:var(--muted);line-height:1.55;max-width:340px;margin:0 auto;}
+.result-readings{display:flex;justify-content:center;gap:22px;margin-top:18px;}
+.result-readings div{text-align:center;}
+.result-readings .v{font-family:var(--mono);font-size:18px;font-weight:500;}
+.result-readings .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+
+/* ---------- Profile ---------- */
+.profile-row{
+  display:flex;align-items:center;gap:13px;
+  padding:14px 15px;
+  border-radius:var(--r-sm);
+  cursor:pointer;
+}
+.avatar{
+  width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:600;font-size:16px;color:#fff;
+  flex-shrink:0;
+}
+.profile-name{font-size:14.5px;font-weight:600;}
+.profile-meta{font-size:11.5px;color:var(--muted);margin-top:1px;}
+.profile-active-tag{
+  font-size:10.5px;color:var(--forest);font-weight:600;
+  background:var(--sage);padding:3px 8px;border-radius:8px;margin-left:auto;
+}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(32,48,42,.45);
+  display:none;align-items:flex-end;justify-content:center;
+  z-index:50;
+}
+.modal-overlay.show{display:flex;}
+@media (min-width:600px){.modal-overlay{align-items:center;}}
+.modal{
+  background:var(--paper);
+  border-radius:24px 24px 0 0;
+  width:100%;max-width:440px;
+  padding:24px 22px calc(24px + env(safe-area-inset-bottom));
+  animation:slideup .25s ease;
+}
+@media (min-width:600px){.modal{border-radius:24px;}}
+@keyframes slideup{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal h3{font-family:var(--display);margin:0 0 16px;font-size:18px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+.field input,.field select{
+  width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--mist);
+  font-size:14.5px;font-family:inherit;background:var(--cream);
+}
+.field input:focus,.field select:focus{outline:2px solid var(--forest-light);outline-offset:1px;}
+.modal-actions{display:flex;gap:10px;margin-top:8px;}
+.color-pick{display:flex;gap:8px;margin-top:4px;}
+.swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+.swatch.sel{border-color:var(--ink);}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;
+  font-size:13px;opacity:0;transition:all .25s;z-index:60;pointer-events:none;
+  max-width:88%;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@media (min-width:860px){.toast{bottom:30px;}}
+
+/* settings */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+
+/* scrollbar tidy */
+::-webkit-scrollbar{width:0;height:0;}
+
+.muted{color:var(--muted);}
+.mt-2{margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/><path d="M9.5 12c1 1.2 2 1.2 3 0"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">NephroBreath</div>
+        <div class="brand-sub">ตรวจคัดกรองไตจากลมหายใจ</div>
+      </div>
+    </div>
+    <button class="status-pill" id="statusPill" onclick="toggleDeviceStatus()">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">ยังไม่เชื่อมต่ออุปกรณ์</span>
+    </button>
+  </div>
+
+  <div class="body-row">
+
+    <div class="sidebar">
+      <button class="side-btn active" data-view="home" onclick="goTo('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+        หน้าหลัก
+      </button>
+      <button class="side-btn" data-view="reading" onclick="goTo('reading')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
+        ตรวจวัดใหม่
+      </button>
+      <button class="side-btn" data-view="trends" onclick="goTo('trends')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg>
+        แนวโน้ม
+      </button>
+      <button class="side-btn" data-view="profile" onclick="goTo('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5 7-5s5.5 1 7 5"/></svg>
+        โปรไฟล์
+      </button>
+    </div>
+
+    <main>
+
+      <!-- ============ HOME ============ -->
+      <div class="view active" id="view-home">
+
+        <div class="card hero">
+          <div class="hero-greeting" id="greetingText">สวัสดีครับ/ค่ะ</div>
+          <div class="hero-name" id="profileNameLabel">คุณเอง</div>
+
+          <div class="ring-wrap">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-pulse" id="ringPulse" cx="50" cy="50" r="44" />
+              <circle class="ring-bg" cx="50" cy="50" r="40"/>
+              <circle class="ring-fg" id="ringFg" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="60"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-status-label">ผลล่าสุด</div>
+              <div class="ring-status-value" id="ringStatusValue">ยังไม่มีข้อมูล</div>
+            </div>
+          </div>
+          <div class="hero-meta" id="heroMeta">ตรวจครั้งแรกเพื่อเริ่มติดตามสุขภาพไตของคุณ</div>
+
+          <div class="hero-cta">
+            <button class="btn btn-primary" onclick="goTo('reading')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+              ตรวจวัดวันนี้
+            </button>
+          </div>
+
+          <div class="stat-row">
+            <div class="card stat-card">
+              <div class="stat-label">แอมโมเนีย (NH₃)</div>
+              <div class="stat-value" id="statNh3">— <span class="stat-unit">ppm</span></div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-label">ตรวจล่าสุด</div>
+              <div class="stat-value" id="statLast" style="font-size:14.5px;">—</div>
+            </div>
+          </div>
+
+          <div class="disclaimer">
+            <b>ข้อควรทราบ:</b> แอปนี้เป็นเครื่องมือคัดกรองเบื้องต้นจากลมหายใจ ไม่สามารถใช้แทนการวินิจฉัยของแพทย์ หากผลแสดงความเสี่ยง ควรไปพบแพทย์เพื่อตรวจยืนยันด้วยค่า eGFR
+          </div>
+        </div>
+
+        <div class="section-title">
+          แนวโน้มล่าสุด
+          <span class="link" onclick="goTo('trends')">ดูทั้งหมด</span>
+        </div>
+        <div class="card trend-card">
+          <div class="trend-head">
+            <span class="t1">14 ครั้งล่าสุด</span>
+            <span class="t2" id="trendDelta">—</span>
+          </div>
+          <div id="sparklineHolder"></div>
+        </div>
+
+        <div class="section-title">
+          ประวัติการตรวจ
+          <span class="link" onclick="goTo('trends')">ดูทั้งหมด</span>
+        </div>
+        <div class="list" id="recentList"></div>
+
+      </div>
+
+      <!-- ============ READING FLOW ============ -->
+      <div class="view" id="view-reading">
+
+        <div id="readingStageWrap">
+          <div class="card flow-stage" id="stageIdle">
+            <div class="flow-title">เตรียมตรวจวัดลมหายใจ</div>
+            <div class="flow-sub">นั่งในที่สงบ หายใจตามปกติ แล้วเป่าลมเข้าอุปกรณ์อย่างสบายๆ เมื่อพร้อมกดปุ่มด้านล่าง</div>
+            <div class="big-ring-wrap">
+              <svg viewBox="0 0 100 100">
+                <circle class="ring-pulse" cx="50" cy="50" r="42" style="animation-duration:5s; stroke:var(--forest-light);"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sage)" stroke-width="9"/>
+              </svg>
+              <div class="countdown">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/></svg>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="startReading()">เริ่มตรวจวัด</button>
+            <div style="margin-top:10px;">
+              <span class="link" style="font-size:12.5px;color:var(--muted);cursor:pointer;text-decoration:underline;" onclick="openManualEntry()">กรอกค่าด้วยตนเอง</span>
+            </div>
+          </div>
+
+          <div class="card flow-stage" id="stageCountdown" style="display:none;">
+            <div class="flow-title">หายใจเข้า–ออกตามจังหวะ</div>
+            <div class="flow-sub">อุปกรณ์กำลังเก็บตัวอย่างอากาศจากปอดส่วนลึก</div>
+            <div class="big-ring-wrap">
+              <svg viewBox="0 0 100 100">
+                <circle class="ring-pulse" cx="50" cy="50" r="42" style="animation-duration:4.4s; stroke:var(--forest);"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sage)" stroke-width="9"/>
+              </svg>
+              <div class="countdown">
+                <div class="n" id="countdownNum">12</div>
+                <div class="l" id="countdownLabel">หายใจเข้า</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="stageResult" style="display:none;"></div>
+        </div>
+
+      </div>
+
+      <!-- ============ TRENDS ============ -->
+      <div class="view" id="view-trends">
+        <div class="section-title" style="margin-top:6px;">แนวโน้มค่าแอมโมเนียในลมหายใจ</div>
+        <div class="card" style="padding:18px;">
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <button class="btn btn-ghost btn-sm range-btn active" data-range="14" onclick="setRange(14,this)">14 วัน</button>
+            <button class="btn btn-ghost btn-sm range-btn" data-range="30" onclick="setRange(30,this)">30 วัน</button>
+            <button class="btn btn-ghost btn-sm range-btn" data-range="9999" onclick="setRange(9999,this)">ทั้งหมด</button>
+          </div>
+          <div id="chartHolder"></div>
+        </div>
+
+        <div class="section-title">ประวัติทั้งหมด</div>
+        <div class="list" id="fullHistoryList"></div>
+      </div>
+
+      <!-- ============ PROFILE ============ -->
+      <div class="view" id="view-profile">
+        <div class="section-title" style="margin-top:6px;">คนในการดูแล</div>
+        <div class="list" id="profileList"></div>
+        <button class="btn btn-ghost btn-block mt-2" onclick="openProfileModal()">+ เพิ่มสมาชิก</button>
+
+        <div class="section-title">การตั้งค่าและข้อมูล</div>
+        <div class="card" style="padding:8px;">
+          <div class="settings-grid">
+            <button class="btn btn-ghost" onclick="exportBackup()">ส่งออกข้อมูล (Backup)</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('restoreInput').click()">นำเข้าข้อมูล (Restore)</button>
+            <button class="btn btn-ghost" onclick="exportCSV()">ส่งออก CSV</button>
+            <button class="btn btn-ghost btn-danger" onclick="confirmClearDemo()">ล้างข้อมูลตัวอย่าง</button>
+          </div>
+          <input type="file" id="restoreInput" accept="application/json" style="display:none" onchange="importBackup(event)">
+        </div>
+
+        <div class="section-title">เกี่ยวกับอุปกรณ์</div>
+        <div class="card" style="padding:18px;font-size:13px;color:var(--muted);line-height:1.6;">
+          พัฒนาจากผลงาน <b style="color:var(--ink);">"Smart Electronic Nose for Early CKD Screening"</b> อุปกรณ์จมูกอิเล็กทรอนิกส์อัจฉริยะสำหรับคัดกรองโรคไตเรื้อรังระยะเริ่มต้น ใช้เซนเซอร์วัดก๊าซแอมโมเนียร่วมกับระบบคัดแยกอากาศจากถุงลมปอดส่วนลึก ส่งข้อมูลผ่าน IoT เพื่อบันทึกและติดตามแนวโน้มสุขภาพในระยะยาว
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div class="bottomnav">
+    <button class="nav-btn active" data-view="home" onclick="goTo('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+      <span>หน้าหลัก</span>
+    </button>
+    <button class="nav-btn" data-view="reading" onclick="goTo('reading')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
+      <span>ตรวจวัด</span>
+    </button>
+    <button class="nav-btn" data-view="trends" onclick="goTo('trends')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg>
+      <span>แนวโน้ม</span>
+    </button>
+    <button class="nav-btn" data-view="profile" onclick="goTo('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5 7-5s5.5 1 7 5"/></svg>
+      <span>โปรไฟล์</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- Profile modal -->
+<div class="modal-overlay" id="profileModalOverlay">
+  <div class="modal">
+    <h3>เพิ่มสมาชิก</h3>
+    <div class="field">
+      <label>ชื่อ</label>
+      <input type="text" id="newProfileName" placeholder="เช่น คุณยายสมศรี">
+    </div>
+    <div class="field">
+      <label>อายุ (ปี)</label>
+      <input type="number" id="newProfileAge" placeholder="65">
+    </div>
+    <div class="field">
+      <label>สีประจำตัว</label>
+      <div class="color-pick" id="colorPick"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-block" onclick="closeModal('profileModalOverlay')">ยกเลิก</button>
+      <button class="btn btn-primary btn-block" onclick="saveNewProfile()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual entry modal -->
+<div class="modal-overlay" id="manualModalOverlay">
+  <div class="modal">
+    <h3>กรอกค่าด้วยตนเอง</h3>
+    <div class="field">
+      <label>ค่าแอมโมเนีย NH₃ (ppm)</label>
+      <input type="number" step="0.01" id="manualNh3" placeholder="เช่น 1.2">
+    </div>
+    <div class="field">
+      <label>บันทึกเพิ่มเติม (ไม่บังคับ)</label>
+      <input type="text" id="manualNote" placeholder="เช่น ตรวจหลังตื่นนอน">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-block" onclick="closeModal('manualModalOverlay')">ยกเลิก</button>
+      <button class="btn btn-primary btn-block" onclick="saveManualEntry()">บันทึกผล</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+const STATUS = {
+  normal:  { label:'ปกติ',            color:'#1F4B3C', bg:'#EAF0E7', detail:'ค่าแอมโมเนียอยู่ในช่วงปกติ ดูแลสุขภาพต่อไปและตรวจซ้ำตามรอบ' },
+  watch:   { label:'ควรเฝ้าระวัง',     color:'#C8932E', bg:'#FBF1DC', detail:'ค่าสูงกว่าปกติเล็กน้อย ลองดื่มน้ำให้เพียงพอและตรวจซ้ำในอีก 2–3 วัน' },
+  elevated:{ label:'ควรพบแพทย์',       color:'#D97B56', bg:'#FBE9E0', detail:'ค่าสูงกว่าช่วงปกติ ควรปรึกษาแพทย์เพื่อตรวจยืนยันด้วยการตรวจเลือดหรือค่า eGFR' }
+};
+const PALETTE = ['#1F4B3C','#3D7A63','#C8932E','#D97B56','#5E6F67','#7C9A8E'];
+
+let state = {
+  deviceConnected:false,
+  profiles:[],
+  readings:[],
+  activeProfileId:null,
+  range:14
+};
+
+function statusFromPpm(ppm){
+  if(ppm < 1.5) return 'normal';
+  if(ppm < 3.0) return 'watch';
+  return 'elevated';
+}
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function save(){
+  localStorage.setItem('nb_profiles', JSON.stringify(state.profiles));
+  localStorage.setItem('nb_readings', JSON.stringify(state.readings));
+  localStorage.setItem('nb_active', state.activeProfileId);
+}
+
+function load(){
+  const p = localStorage.getItem('nb_profiles');
+  const r = localStorage.getItem('nb_readings');
+  const a = localStorage.getItem('nb_active');
+  if(p){ state.profiles = JSON.parse(p); }
+  if(r){ state.readings = JSON.parse(r); }
+  if(a){ state.activeProfileId = a; }
+
+  if(state.profiles.length === 0){
+    seedDemo();
+  }
+}
+
+function seedDemo(){
+  const me = { id: uid(), name:'คุณเอง', age:'', color: PALETTE[0] };
+  state.profiles = [me];
+  state.activeProfileId = me.id;
+  const now = Date.now();
+  const day = 86400000;
+  let base = 1.0;
+  for(let i=13;i>=0;i--){
+    base += (Math.random()-0.45)*0.25;
+    base = Math.max(0.4, base);
+    state.readings.push({
+      id: uid(),
+      profileId: me.id,
+      ts: now - i*day - Math.floor(Math.random()*5000),
+      nh3: Math.round(base*100)/100,
+      note:''
+    });
+  }
+  save();
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function goTo(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('.side-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='reading') resetReadingFlow();
+  if(view==='trends') renderTrends();
+  if(view==='profile') renderProfile();
+  if(view==='home') renderHome();
+  window.scrollTo(0,0);
+}
+
+function toggleDeviceStatus(){
+  state.deviceConnected = !state.deviceConnected;
+  const pill = document.getElementById('statusPill');
+  pill.classList.toggle('connected', state.deviceConnected);
+  document.getElementById('statusText').textContent = state.deviceConnected ? 'เชื่อมต่ออุปกรณ์แล้ว' : 'ยังไม่เชื่อมต่ออุปกรณ์';
+  showToast(state.deviceConnected ? 'เชื่อมต่ออุปกรณ์ E-Nose สำเร็จ' : 'ยกเลิกการเชื่อมต่อแล้ว');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   HOME
+========================================================= */
+function activeProfile(){
+  return state.profiles.find(p=>p.id===state.activeProfileId) || state.profiles[0];
+}
+function readingsForActive(){
+  return state.readings.filter(r=>r.profileId===state.activeProfileId).sort((a,b)=>a.ts-b.ts);
+}
+
+function renderHome(){
+  const prof = activeProfile();
+  document.getElementById('profileNameLabel').textContent = prof ? prof.name : '—';
+  const hour = new Date().getHours();
+  document.getElementById('greetingText').textContent = hour<12?'สวัสดีตอนเช้า':hour<18?'สวัสดีตอนบ่าย':'สวัสดีตอนเย็น';
+
+  const rs = readingsForActive();
+  const ring = document.getElementById('ringFg');
+  const ringVal = document.getElementById('ringStatusValue');
+  const heroMeta = document.getElementById('heroMeta');
+  const statNh3 = document.getElementById('statNh3');
+  const statLast = document.getElementById('statLast');
+
+  if(rs.length===0){
+    ring.style.stroke = '#C9D6CE';
+    ring.setAttribute('stroke-dashoffset', 251.2);
+    ringVal.textContent = 'ยังไม่มีข้อมูล';
+    ringVal.style.color = 'var(--ink)';
+    heroMeta.textContent = 'ตรวจครั้งแรกเพื่อเริ่มติดตามสุขภาพไตของคุณ';
+    statNh3.innerHTML = '— <span class="stat-unit">ppm</span>';
+    statLast.textContent = '—';
+  } else {
+    const last = rs[rs.length-1];
+    const st = STATUS[statusFromPpm(last.nh3)];
+    const pct = Math.min(last.nh3/4, 1);
+    ring.style.stroke = st.color;
+    ring.setAttribute('stroke-dashoffset', (251.2*(1-pct)).toFixed(1));
+    ringVal.textContent = st.label;
+    ringVal.style.color = st.color;
+    heroMeta.textContent = 'ตรวจล่าสุด ' + relativeDate(last.ts);
+    statNh3.innerHTML = last.nh3.toFixed(2) + ' <span class="stat-unit">ppm</span>';
+    statLast.textContent = formatDate(last.ts);
+  }
+
+  // sparkline
+  document.getElementById('sparklineHolder').innerHTML = buildSparkline(rs.slice(-14));
+  const delta = document.getElementById('trendDelta');
+  if(rs.length>=2){
+    const d = rs[rs.length-1].nh3 - rs[rs.length-2].nh3;
+    delta.textContent = (d>=0?'+':'') + d.toFixed(2) + ' ppm';
+    delta.style.color = d>0.05 ? '#D97B56' : (d < -0.05 ? '#1F4B3C' : 'var(--forest-light)');
+  } else {
+    delta.textContent = '—';
+  }
+
+  // recent list (last 5)
+  const recent = rs.slice(-5).reverse();
+  document.getElementById('recentList').innerHTML = recent.length ? recent.map(r=>historyItemHtml(r)).join('') : emptyHtml('ยังไม่มีประวัติการตรวจ','กดปุ่ม "ตรวจวัดวันนี้" เพื่อเริ่มต้น');
+}
+
+function relativeDate(ts){
+  const diff = Date.now()-ts;
+  const days = Math.floor(diff/86400000);
+  if(days<=0) return 'วันนี้';
+  if(days===1) return 'เมื่อวาน';
+  return days+' วันที่แล้ว';
+}
+function formatDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString('th-TH', {day:'numeric', month:'short'}) + ' · ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+
+function historyItemHtml(r){
+  const st = STATUS[statusFromPpm(r.nh3)];
+  return `<div class="card list-item">
+    <div class="li-left">
+      <span class="li-tag" style="background:${st.color}"></span>
+      <div>
+        <div class="li-date">${formatDate(r.ts)}</div>
+        <div class="li-sub">${r.note ? r.note : st.label}</div>
+      </div>
+    </div>
+    <div>
+      <div class="li-value">${r.nh3.toFixed(2)} ppm</div>
+      <div class="li-status" style="color:${st.color}">${st.label}</div>
+    </div>
+  </div>`;
+}
+
+function emptyHtml(title, sub){
+  return `<div class="card empty">
+    <div class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/></svg></div>
+    <h3>${title}</h3><p>${sub}</p>
+  </div>`;
+}
+
+function buildSparkline(rs){
+  if(rs.length<2) return `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:12.5px;">ยังไม่มีข้อมูลเพียงพอสำหรับกราฟ</div>`;
+  const w=600,h=70,pad=6;
+  const vals = rs.map(r=>r.nh3);
+  const min = Math.min(...vals,0.3), max = Math.max(...vals,2);
+  const stepX = (w-pad*2)/(rs.length-1);
+  const pts = rs.map((r,i)=>{
+    const x = pad+i*stepX;
+    const y = h-pad-((r.nh3-min)/(max-min))*(h-pad*2);
+    return [x,y];
+  });
+  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const last = pts[pts.length-1];
+  const lastStatus = STATUS[statusFromPpm(rs[rs.length-1].nh3)];
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:70px;overflow:visible;">
+    <path d="${path}" fill="none" stroke="${lastStatus.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="4.5" fill="${lastStatus.color}"/>
+  </svg>`;
+}
+
+/* =========================================================
+   READING FLOW
+========================================================= */
+function resetReadingFlow(){
+  document.getElementById('stageIdle').style.display='block';
+  document.getElementById('stageCountdown').style.display='none';
+  document.getElementById('stageResult').style.display='none';
+}
+
+let countdownTimer=null;
+function startReading(){
+  document.getElementById('stageIdle').style.display='none';
+  document.getElementById('stageCountdown').style.display='block';
+  let secs = 12;
+  const num = document.getElementById('countdownNum');
+  const label = document.getElementById('countdownLabel');
+  num.textContent = secs;
+  let phase=true;
+  countdownTimer = setInterval(()=>{
+    secs--;
+    num.textContent = secs;
+    label.textContent = phase ? 'หายใจออก' : 'หายใจเข้า';
+    phase=!phase;
+    if(secs<=0){
+      clearInterval(countdownTimer);
+      finishReading();
+    }
+  },1000);
+}
+
+function finishReading(){
+  const rs = readingsForActive();
+  let base = rs.length ? rs[rs.length-1].nh3 : 1.0;
+  let val = base + (Math.random()-0.45)*0.4;
+  val = Math.max(0.3, Math.round(val*100)/100);
+  const r = { id:uid(), profileId:state.activeProfileId, ts:Date.now(), nh3:val, note:'' };
+  state.readings.push(r);
+  save();
+  showResult(r);
+}
+
+function showResult(r){
+  document.getElementById('stageCountdown').style.display='none';
+  const st = STATUS[statusFromPpm(r.nh3)];
+  document.getElementById('stageResult').innerHTML = `
+    <div class="card result-banner" style="background:${st.bg};">
+      <div class="result-icon" style="background:${st.color}33;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${st.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/></svg>
+      </div>
+      <div class="result-status" style="color:${st.color};text-align:center;">${st.label}</div>
+      <div class="result-detail">${st.detail}</div>
+      <div class="result-readings">
+        <div><div class="v">${r.nh3.toFixed(2)}</div><div class="l">NH₃ ppm</div></div>
+        <div><div class="v">${formatDate(r.ts).split(' · ')[1]}</div><div class="l">เวลา</div></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="goTo('home')">เสร็จสิ้น กลับหน้าหลัก</button>
+    <button class="btn btn-ghost btn-block mt-2" onclick="resetReadingFlow()">ตรวจอีกครั้ง</button>
+  `;
+  document.getElementById('stageResult').style.display='block';
+  showToast('บันทึกผลการตรวจแล้ว');
+}
+
+function openManualEntry(){
+  document.getElementById('manualNh3').value='';
+  document.getElementById('manualNote').value='';
+  document.getElementById('manualModalOverlay').classList.add('show');
+}
+function saveManualEntry(){
+  const v = parseFloat(document.getElementById('manualNh3').value);
+  if(isNaN(v) || v<0){ showToast('กรุณากรอกค่าที่ถูกต้อง'); return; }
+  const note = document.getElementById('manualNote').value.trim();
+  const r = { id:uid(), profileId:state.activeProfileId, ts:Date.now(), nh3:Math.round(v*100)/100, note };
+  state.readings.push(r);
+  save();
+  closeModal('manualModalOverlay');
+  showResult(r);
+}
+
+/* =========================================================
+   TRENDS
+========================================================= */
+function setRange(days, btn){
+  state.range = days;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrends();
+}
+
+function renderTrends(){
+  const all = readingsForActive();
+  const cutoff = Date.now() - state.range*86400000;
+  const rs = state.range>=9999 ? all : all.filter(r=>r.ts>=cutoff);
+  document.getElementById('chartHolder').innerHTML = buildChart(rs);
+  const full = all.slice().reverse();
+  document.getElementById('fullHistoryList').innerHTML = full.length ? full.map(r=>historyItemHtml(r)).join('') : emptyHtml('ยังไม่มีประวัติ','เริ่มตรวจวัดเพื่อสร้างกราฟแนวโน้ม');
+}
+
+function buildChart(rs){
+  if(rs.length<2) return `<div style="text-align:center;padding:50px 0;color:var(--muted);font-size:13px;">ข้อมูลยังไม่พอสำหรับแสดงกราฟ (ต้องมีอย่างน้อย 2 ครั้ง)</div>`;
+  const w=680,h=220,padL=34,padR=10,padT=18,padB=24;
+  const vals = rs.map(r=>r.nh3);
+  const min = 0, max = Math.max(4, Math.ceil(Math.max(...vals)));
+  const stepX = (w-padL-padR)/(rs.length-1);
+  const yOf = v => padT + (1-(v-min)/(max-min))*(h-padT-padB);
+  const pts = rs.map((r,i)=>[padL+i*stepX, yOf(r.nh3)]);
+  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const areaPath = path + ` L${pts[pts.length-1][0].toFixed(1)},${(h-padB)} L${pts[0][0].toFixed(1)},${(h-padB)} Z`;
+
+  // threshold lines
+  const watchY = yOf(1.5).toFixed(1);
+  const elevY = yOf(3.0).toFixed(1);
+
+  const dots = pts.map((p,i)=>{
+    const st = STATUS[statusFromPpm(rs[i].nh3)];
+    return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${st.color}" stroke="#fff" stroke-width="1"/>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;">
+    <line x1="${padL}" y1="${elevY}" x2="${w-padR}" y2="${elevY}" stroke="#D97B56" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
+    <line x1="${padL}" y1="${watchY}" x2="${w-padR}" y2="${watchY}" stroke="#C8932E" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
+    <text x="${w-padR}" y="${elevY-4}" text-anchor="end" font-size="9.5" fill="#D97B56" font-family="IBM Plex Mono, monospace">3.0</text>
+    <text x="${w-padR}" y="${watchY-4}" text-anchor="end" font-size="9.5" fill="#C8932E" font-family="IBM Plex Mono, monospace">1.5</text>
+    <path d="${areaPath}" fill="#1F4B3C" opacity="0.06"/>
+    <path d="${path}" fill="none" stroke="#1F4B3C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+  </svg>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:2px;font-family:'IBM Plex Mono',monospace;">
+    <span>${formatDate(rs[0].ts).split(' · ')[0]}</span>
+    <span>${formatDate(rs[rs.length-1].ts).split(' · ')[0]}</span>
+  </div>`;
+}
+
+/* =========================================================
+   PROFILE
+========================================================= */
+function renderProfile(){
+  document.getElementById('profileList').innerHTML = state.profiles.map(p=>{
+    const initial = p.name.trim().charAt(0).toUpperCase();
+    const active = p.id===state.activeProfileId;
+    return `<div class="card profile-row" onclick="switchProfile('${p.id}')">
+      <div class="avatar" style="background:${p.color||'#1F4B3C'}">${initial}</div>
+      <div>
+        <div class="profile-name">${p.name}</div>
+        <div class="profile-meta">${p.age?p.age+' ปี · ':''}${readingsForId(p.id).length} ครั้งที่ตรวจ</div>
+      </div>
+      ${active?'<span class="profile-active-tag">กำลังดูแล</span>':''}
+    </div>`;
+  }).join('');
+}
+function readingsForId(id){ return state.readings.filter(r=>r.profileId===id); }
+
+function switchProfile(id){
+  state.activeProfileId = id;
+  save();
+  renderProfile();
+  showToast('สลับไปยังโปรไฟล์: ' + activeProfile().name);
+}
+
+function openProfileModal(){
+  document.getElementById('newProfileName').value='';
+  document.getElementById('newProfileAge').value='';
+  const pick = document.getElementById('colorPick');
+  pick.innerHTML = PALETTE.map((c,i)=>`<div class="swatch ${i===0?'sel':''}" style="background:${c}" onclick="selectColor(this,'${c}')"></div>`).join('');
+  pick.dataset.selected = PALETTE[0];
+  document.getElementById('profileModalOverlay').classList.add('show');
+}
+function selectColor(el,c){
+  document.querySelectorAll('#colorPick .swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('colorPick').dataset.selected = c;
+}
+function saveNewProfile(){
+  const name = document.getElementById('newProfileName').value.trim();
+  if(!name){ showToast('กรุณากรอกชื่อ'); return; }
+  const age = document.getElementById('newProfileAge').value;
+  const color = document.getElementById('colorPick').dataset.selected || PALETTE[0];
+  const p = { id:uid(), name, age, color };
+  state.profiles.push(p);
+  state.activeProfileId = p.id;
+  save();
+  closeModal('profileModalOverlay');
+  renderProfile();
+  showToast('เพิ่มสมาชิกแล้ว');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* =========================================================
+   BACKUP / RESTORE / CSV
+========================================================= */
+function exportBackup(){
+  const data = { profiles:state.profiles, readings:state.readings, exportedAt:new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nephrobreath-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  showToast('ส่งออกข้อมูลแล้ว');
+}
+function importBackup(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(data.profiles && data.readings){
+        state.profiles = data.profiles;
+        state.readings = data.readings;
+        state.activeProfileId = data.profiles[0] ? data.profiles[0].id : null;
+        save();
+        renderProfile(); renderHome();
+        showToast('นำเข้าข้อมูลสำเร็จ');
+      } else { showToast('ไฟล์ไม่ถูกต้อง'); }
+    }catch(err){ showToast('ไม่สามารถอ่านไฟล์ได้'); }
+  };
+  reader.readAsText(file);
+}
+function exportCSV(){
+  const rows = [['profile','timestamp','nh3_ppm','status','note']];
+  state.readings.forEach(r=>{
+    const p = state.profiles.find(pp=>pp.id===r.profileId);
+    rows.push([p?p.name:'', new Date(r.ts).toISOString(), r.nh3, STATUS[statusFromPpm(r.nh3)].label, r.note||'']);
+  });
+  const csv = rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nephrobreath-readings.csv';
+  a.click();
+  showToast('ส่งออก CSV แล้ว');
+}
+function confirmClearDemo(){
+  if(confirm('ล้างข้อมูลทั้งหมดและเริ่มต้นใหม่ด้วยข้อมูลตัวอย่าง?')){
+    localStorage.removeItem('nb_profiles');
+    localStorage.removeItem('nb_readings');
+    localStorage.removeItem('nb_active');
+    state.profiles=[]; state.readings=[]; state.activeProfileId=null;
+    seedDemo();
+    renderProfile(); renderHome();
+    showToast('ล้างข้อมูลแล้ว');
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+load();
+renderHome();
+</script>
+</body>
+</html>
