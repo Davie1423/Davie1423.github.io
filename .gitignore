@@ -2,3 +2,7 @@
 .claude/
 .qodo/
 mobile/
+.mcp.json
+.agents/
+skills-lock.json
+andrej-karpathy-skills-main/
