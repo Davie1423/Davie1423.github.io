@@ -1,97 +1,116 @@
 # NephroBreath — Project Understanding
 
 ## What this is
-A webapp + mobile app for **NephroBreath** — a breath-test screening tool
-for early chronic kidney disease (CKD), based on an ammonia (NH₃) e-nose
-sensor concept ("Smart Electronic Nose for Early CKD Screening"). UI
-language is Thai. As of this update, both clients share a real Supabase
-backend (Postgres + Auth + Realtime) — see `SETUP.md` for how the sync
-works and how to stand up your own project.
+A companion app system for **NephroBreath** — a portable, non-invasive
+breath-ammonia (NH₃) screening device for early-stage chronic kidney
+disease (CKD). Hardware target: ESP32-WROOM, 2× MiCS-6814 gas sensors (one
+breath-facing "tube" sensor, one outward-facing "ambient" sensor), 1×
+SCD40 (CO₂/temp/humidity), LCD touchscreen, and a servo/solenoid valve that
+implements "alveolar air gating" — it only opens to sample air once
+exhaled CO₂ plateaus at the alveolar threshold (~4–5%), so the sensors see
+deep-lung air, not mouth/dead-space air. UI language is Thai.
 
-## Origin vs. current state
-`ReadMe.md` describes 4 planned features for a fuller telehealth product:
-1. Patient registration / profile dashboard for clinicians
-2. Real-time gas graph via MQTT/HTTP (NH₃ + CO₂) with live AI risk scoring
-3. Long-term trend dashboard from historical readings
-4. Automated alerts + PDF report export for referral to hospitals
+This is a screening/risk-assessment tool, not a diagnostic device — every
+result screen says so explicitly.
 
-**What's built covers #1 and #3 across two clients**, backed by Supabase
-instead of `localStorage`:
-- Multi-profile support (add family members, switch between them) — covers
-  the "patient registration" idea, but as one symmetric household account
-  rather than a clinician/patient role split.
-- Home / Reading / Trends / Profile views (webapp: single-page `.view`
-  show/hide router; mobile: React Navigation bottom tabs, same 4 screens).
-- "ตรวจวัดใหม่" (new reading) flow is a fake 12-second countdown that then
-  generates a random NH₃ value drifting off the previous one — there is no
-  real device or MQTT/HTTP integration yet. This is the only part still
-  simulated client-side; everything else round-trips through Supabase.
-- Trends view plots a hand-rolled SVG line chart (webapp: raw `<svg>`
-  strings; mobile: `react-native-svg`) with threshold lines at 1.5 and
-  3.0 ppm.
-- Backup/Restore (JSON) and CSV export exist (webapp only); **PDF export
-  and alert/referral automation (item #4) are not implemented.**
-- No AI risk model — status (`normal` / `watch` / `elevated`) is a simple
-  ppm threshold lookup (`statusFromPpm`), not a learned model.
-- No CO₂ reading anywhere, only NH₃.
+## System architecture
+Three clients, one Supabase backend (Postgres + Auth + Realtime):
+- **Device** (ESP32 touchscreen) — uploads each test session's raw
+  readings/curves to Supabase. No real firmware lives in this repo; the
+  schema and apps are built against this target so a real device can be
+  dropped in later (see `SETUP.md` for how it would authenticate and what
+  it needs to upload).
+- **Mobile app** (`mobile/`, Flutter + `supabase_flutter`) — same views as
+  the web dashboard.
+- **Web dashboard** (`index.html`) — clinician/operator-facing.
 
-## File structure
-```
-index.html            — webapp markup + inline <script>, links Style/style.css
-Style/style.css        — webapp styling
-supabase-config.js      — webapp's Supabase URL/anon key (fill in per SETUP.md)
-supabase/schema.sql     — Postgres schema + RLS policies + realtime setup
-mobile/                 — Expo React Native app (same backend as the webapp)
-  App.js                  — navigation + auth/data provider wiring
-  src/lib/                 — supabase client, config, theme, status/PALETTE (ported from webapp)
-  src/context/             — AuthContext (session), DataContext (profiles/readings CRUD + realtime)
-  src/screens/             — Login, Home, Reading, Trends, Profile
-  src/components/          — Ring, Sparkline, Chart (svg), HistoryItem
-SETUP.md                — how to create the Supabase project and run both apps
-ReadMe.md               — original Thai concept/spec doc (4 feature ideas)
-.qodo/                   — empty Qodo tool scaffolding (agents/, workflows/), no content
-```
+All three read/write the same `patients` / `test_sessions` tables and
+subscribe to the same realtime channels, so a session started on the
+device (or entered manually in either app) appears live everywhere else.
 
-## Code structure (index.html)
-- **State**: global `state` object — `profiles[]`, `readings[]`,
-  `activeProfileId`, `range`, `deviceConnected`. Profiles/readings are
-  loaded from and written to Supabase (`loadProfiles`/`loadReadings`/
-  `loadData`); only `nb_active` (which profile is selected) stays in
-  `localStorage`, since it's a per-device UI preference, not shared data.
-- **Auth**: `#authScreen` login/signup form, `handleAuthSubmit`, session
-  tracked via `sb.auth.onAuthStateChange`; `#appShell` is hidden until a
-  session exists.
-- **Sync**: `subscribeRealtime()` subscribes to Postgres change events on
-  `profiles`/`readings` scoped to the logged-in household and re-renders
-  the active view when the *other* client (mobile or another browser tab)
-  changes something.
-- **Views**: `#view-home`, `#view-reading`, `#view-trends`, `#view-profile`,
-  toggled by `goTo(view)`; each has a matching `render*()` function.
-- **Reading flow**: idle → countdown (`startReading`) → fake result
-  (`finishReading` → `showResult`, now inserting into `readings` via
-  Supabase); manual entry modal as an alternative input.
-- **Charts**: both the home sparkline and the trends chart are custom SVG
-  path builders (no chart library).
-- **Data portability**: `exportBackup`/`importBackup` (JSON, now
-  round-trips through Supabase inserts), `exportCSV`.
+## Data model (`supabase/schema.sql`)
+- **`patients`** — looked up/created by `patient_code` (clinic-assigned
+  ID), not scoped to a single login. Any staff account can see any
+  patient's full history across visits — this is a clinic tool, not a
+  per-household app like the project's earlier iteration was.
+- **`test_sessions`** — one row per breath test:
+  - `tube_nh3` / `ambient_nh3` → `corrected_nh3` (generated column:
+    tube − ambient)
+  - `co2_curve` (jsonb array of `{t, co2}` samples) + `gating_t`/
+    `gating_co2` (when the alveolar valve opened)
+  - `nh3_curve` (jsonb array of `{t, r}` raw sensor response during the
+    gated sampling window) → feeds feature extraction
+  - `temperature`, `humidity`
+  - extracted features: `peak_response` (peak ΔR/R0), `absorption_slope`,
+    `auc`
+  - `risk_level` (`normal` | `elevated`), `risk_score`, `risk_model`
+  - `status` (`in_progress` → `gating` → `completed`, or `error`) — this is
+    what powers the live-test view
+- **`devices`** — links a device's own Supabase Auth login to a
+  human-readable `device_code`, so RLS can tell device logins apart from
+  staff logins (`is_device()` / `is_staff()`).
 
-## Mobile app (mobile/)
-- Same data model and Supabase project as the webapp — logging in with the
-  same account on both shows the same profiles/readings, live.
-- `DataContext` mirrors the webapp's state functions (`loadProfiles`,
-  `loadReadings`, `addReading`, `addProfile`, `switchProfile`, `clearAll`)
-  with a Postgres realtime subscription identical in shape to the
-  webapp's `subscribeRealtime`.
-- `nb_active` (selected profile) persisted via `AsyncStorage` instead of
-  `localStorage` — same per-device-only semantics as the webapp.
+### Processing pipeline
+A `before insert or update` trigger on `test_sessions`
+(`compute_session_pipeline()`) does all five pipeline steps server-side,
+so the device only has to upload raw data:
+1. Baseline drift correction (first `nh3_curve` sample as reference)
+2. Temperature/humidity compensation (linear, placeholder coefficients)
+3. Noise filtering (two-point moving average)
+4. Feature extraction (peak ΔR/R0, slope, AUC via trapezoidal integration)
+5. Risk classification
+
+**Step 5 is a rule-based threshold on `corrected_nh3`
+(`risk_model = 'rule-based-v1'`), not a trained ML model.** This mirrors
+this project's existing honest-scoping pattern (the original ppm-threshold
+`statusFromPpm` logic from the household-tracking version). The extracted
+features are stored on every session specifically so a trained classifier
+can be swapped in later without touching the schema.
+
+## Web dashboard (`index.html`)
+Rebuilt from the ground up around the new data model (the previous version
+was a household self-tracking app; see "Origin vs. current state" below).
+Views: Home (stats + recent sessions + live-test banner), Patients
+(search/create by `patient_code`), Patient Detail (trend chart across that
+patient's `corrected_nh3` over time + session history), Session Result
+(risk banner, CO₂ curve with the gating point marked, extracted features),
+Live Test (realtime view of an in-progress session, auto-navigates to the
+result once `status` flips to `completed`), Account (sign out, CSV
+export). No build step — vanilla JS/HTML/CSS/SVG, same as before, styled
+with the existing forest/sage/clay design system in `Style/style.css`.
+
+Manual session entry (tube/ambient NH₃ + temp/humidity, no device
+required) exercises the exact same insert path and trigger a real device
+would use — this is how the whole pipeline can be tested without hardware.
+
+## Mobile app (`mobile/`)
+**Not yet built in this checkout.** Earlier project notes described a
+React Native app under `mobile/`, but that directory does not exist in
+this repo as of this update. The plan is a Flutter app
+(`supabase_flutter` + `fl_chart`) mirroring the web dashboard's views
+against the same schema — see the Flutter-specific task/handoff notes if
+a build is in progress, or `SETUP.md` once it exists.
+
+## Origin vs. earlier iteration
+This project previously had a different shape: a household
+self-tracking app (`profiles`/`readings` tables, one Supabase Auth account
+per family, a simulated 12-second "ตรวจวัดใหม่" countdown generating a
+random NH₃ value). That data model, UI, and the old `mobile/` React Native
+app have all been replaced by the clinic/device-oriented system described
+above, built against the hardware spec (dual NH₃ sensors, CO₂-gated
+sampling, ESP32/Flutter/web). The oldest layer — `ReadMe.md` — is the
+original 4-feature Thai concept doc predating either iteration; of its
+4 items, this version covers #1 (patient lookup/registration, now as a
+clinic tool) and #3 (trend dashboard), but still has no PDF export /
+automated referral (item #4) and no CO₂-based AI model beyond the
+rule-based classifier described above.
 
 ## Notable gaps if this is meant to become the real product
-- No real sensor/device integration (Bluetooth/MQTT/HTTP) — readings are
-  still `Math.random()`-generated, same as before; `toggleDeviceStatus` in
-  the webapp still just flips a boolean.
-- No clinician role — every account is a symmetric "household," not the
-  clinician-vs-patient split described in ReadMe.md's original concept.
-- No PDF report generation or alert/referral system (ReadMe item #4).
-- No CO₂ channel, no AI-based risk classification.
-- Mobile app has no native build/store submission set up yet — it currently
-  only runs via Expo Go / dev client (`npx expo start`).
+- No real ESP32 firmware — the schema/apps are built against the hardware
+  spec but nothing in this repo runs on actual hardware yet.
+- No trained ML model for risk classification (see pipeline step 5 above).
+- No PDF report generation or alert/referral system.
+- No device-provisioning UI in either app — registering a device
+  (`devices` table) is a manual SQL step for now (see `SETUP.md`); this
+  was left out deliberately since no "core app feature" in the spec asked
+  for device management UI, only patient-facing flows.

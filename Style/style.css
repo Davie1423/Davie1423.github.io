@@ -524,6 +524,34 @@ main{
 .muted{color:var(--muted);}
 .mt-2{margin-top:8px;}
 
+/* ---------- Dashboard additions ---------- */
+.back-link{
+  background:none;border:none;cursor:pointer;
+  font-family:var(--body);font-size:13px;font-weight:600;
+  color:var(--forest-light);padding:6px 2px;
+}
+.back-link:hover{opacity:.75;}
+.mb-2{margin-bottom:8px;}
+
+.patient-head{display:flex;align-items:center;gap:14px;}
+
+.status-chip{
+  display:inline-flex;align-items:center;
+  font-family:var(--mono);font-size:10.5px;font-weight:600;
+  letter-spacing:.03em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;
+  background:var(--sage);color:var(--forest);
+}
+.status-chip.live{background:var(--gold-bg);color:#6B4F1E;}
+.status-chip.err{background:var(--clay-bg);color:#B14B36;}
+
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+  gap:10px;
+  margin-top:0;
+}
+
 /* ---------- Auth screen ---------- */
 #appShell{display:none;}
 .auth-screen{

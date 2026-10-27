@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NephroBreath · ตรวจไตจากลมหายใจ</title>
+<title>NephroBreath · แดชบอร์ดคัดกรองไตจากลมหายใจ</title>
 <meta name="theme-color" content="#1F4B3C">
 <link rel="stylesheet" href="Style/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -19,7 +19,7 @@
       </div>
       <div class="brand-name">NephroBreath</div>
     </div>
-    <h3 id="authTitle">เข้าสู่ระบบ</h3>
+    <h3 id="authTitle">เข้าสู่ระบบเจ้าหน้าที่</h3>
     <div class="field" style="text-align:left;">
       <label>อีเมล</label>
       <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
@@ -40,18 +40,18 @@
 <div class="shell" id="appShell">
 
   <div class="topbar">
-    <div class="brand">
+    <div class="brand" id="topbarBrand">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/><path d="M9.5 12c1 1.2 2 1.2 3 0"/></svg>
       </div>
       <div>
         <div class="brand-name">NephroBreath</div>
-        <div class="brand-sub">ตรวจคัดกรองไตจากลมหายใจ</div>
+        <div class="brand-sub">แดชบอร์ดคัดกรองไตจากลมหายใจ</div>
       </div>
     </div>
-    <button class="status-pill" id="statusPill" onclick="toggleDeviceStatus()">
-      <span class="status-dot" id="statusDot"></span>
-      <span id="statusText">ยังไม่เชื่อมต่ออุปกรณ์</span>
+    <button class="status-pill" id="livePill" onclick="goToLive()" style="display:none;">
+      <span class="status-dot"></span>
+      <span id="livePillText">กำลังตรวจอยู่</span>
     </button>
   </div>
 
@@ -62,17 +62,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
         หน้าหลัก
       </button>
-      <button class="side-btn" data-view="reading" onclick="goTo('reading')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
-        ตรวจวัดใหม่
+      <button class="side-btn" data-view="patients" onclick="goTo('patients')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 19c1.2-3.5 4-4.5 6.5-4.5s5.3 1 6.5 4.5"/><circle cx="17" cy="8" r="2.5"/><path d="M16 14c2.4.2 4 1.4 4.8 3.7"/></svg>
+        ผู้ป่วย
       </button>
-      <button class="side-btn" data-view="trends" onclick="goTo('trends')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg>
-        แนวโน้ม
-      </button>
-      <button class="side-btn" data-view="profile" onclick="goTo('profile')">
+      <button class="side-btn" data-view="account" onclick="goTo('account')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5 7-5s5.5 1 7 5"/></svg>
-        โปรไฟล์
+        บัญชี
       </button>
     </div>
 
@@ -80,151 +76,99 @@
 
       <!-- ============ HOME ============ -->
       <div class="view active" id="view-home">
-
-        <div class="card hero">
-          <div class="hero-greeting" id="greetingText">สวัสดีครับ/ค่ะ</div>
-          <div class="hero-name" id="profileNameLabel">คุณเอง</div>
-
-          <div class="ring-wrap">
-            <svg viewBox="0 0 100 100">
-              <circle class="ring-pulse" id="ringPulse" cx="50" cy="50" r="44" />
-              <circle class="ring-bg" cx="50" cy="50" r="40"/>
-              <circle class="ring-fg" id="ringFg" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="60"/>
-            </svg>
-            <div class="ring-center">
-              <div class="ring-status-label">ผลล่าสุด</div>
-              <div class="ring-status-value" id="ringStatusValue">ยังไม่มีข้อมูล</div>
-            </div>
-          </div>
-          <div class="hero-meta" id="heroMeta">ตรวจครั้งแรกเพื่อเริ่มติดตามสุขภาพไตของคุณ</div>
-
-          <div class="hero-cta">
-            <button class="btn btn-primary" onclick="goTo('reading')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
-              ตรวจวัดวันนี้
-            </button>
-          </div>
-
-          <div class="stat-row">
+        <div class="card hero" style="text-align:left;padding:26px 22px;">
+          <div class="hero-greeting" id="greetingText" style="margin-bottom:2px;">แดชบอร์ดวันนี้</div>
+          <div class="hero-name" style="margin-bottom:16px;">ภาพรวมการคัดกรอง</div>
+          <div class="stat-row" style="margin-top:0;">
             <div class="card stat-card">
-              <div class="stat-label">แอมโมเนีย (NH₃)</div>
-              <div class="stat-value" id="statNh3">— <span class="stat-unit">ppm</span></div>
+              <div class="stat-label">ผู้ป่วยทั้งหมด</div>
+              <div class="stat-value" id="statPatients">0</div>
             </div>
             <div class="card stat-card">
-              <div class="stat-label">ตรวจล่าสุด</div>
-              <div class="stat-value" id="statLast" style="font-size:14.5px;">—</div>
+              <div class="stat-label">ตรวจวันนี้</div>
+              <div class="stat-value" id="statToday">0</div>
             </div>
           </div>
-
+          <div class="hero-cta" style="justify-content:flex-start;margin-top:18px;">
+            <button class="btn btn-primary" onclick="openPatientModal()">+ ผู้ป่วยใหม่</button>
+            <button class="btn btn-ghost" onclick="goTo('patients')">ดูผู้ป่วยทั้งหมด</button>
+          </div>
           <div class="disclaimer">
-            <b>ข้อควรทราบ:</b> แอปนี้เป็นเครื่องมือคัดกรองเบื้องต้นจากลมหายใจ ไม่สามารถใช้แทนการวินิจฉัยของแพทย์ หากผลแสดงความเสี่ยง ควรไปพบแพทย์เพื่อตรวจยืนยันด้วยค่า eGFR
+            <b>ข้อควรทราบ:</b> ระบบนี้เป็นเครื่องมือคัดกรองความเสี่ยงเบื้องต้นจากลมหายใจ ไม่ใช่การวินิจฉัยทางการแพทย์ ผลที่มีความเสี่ยงสูงขึ้นควรส่งตรวจยืนยันเพิ่มเติม (เช่น eGFR) เสมอ
           </div>
         </div>
 
         <div class="section-title">
-          แนวโน้มล่าสุด
-          <span class="link" onclick="goTo('trends')">ดูทั้งหมด</span>
+          การตรวจล่าสุด
+          <span class="link" onclick="goTo('patients')">ดูผู้ป่วยทั้งหมด</span>
         </div>
-        <div class="card trend-card">
-          <div class="trend-head">
-            <span class="t1">14 ครั้งล่าสุด</span>
-            <span class="t2" id="trendDelta">—</span>
-          </div>
-          <div id="sparklineHolder"></div>
-        </div>
-
-        <div class="section-title">
-          ประวัติการตรวจ
-          <span class="link" onclick="goTo('trends')">ดูทั้งหมด</span>
-        </div>
-        <div class="list" id="recentList"></div>
-
+        <div class="list" id="recentSessionsList"></div>
       </div>
 
-      <!-- ============ READING FLOW ============ -->
-      <div class="view" id="view-reading">
-
-        <div id="readingStageWrap">
-          <div class="card flow-stage" id="stageIdle">
-            <div class="flow-title">เตรียมตรวจวัดลมหายใจ</div>
-            <div class="flow-sub">นั่งในที่สงบ หายใจตามปกติ แล้วเป่าลมเข้าอุปกรณ์อย่างสบายๆ เมื่อพร้อมกดปุ่มด้านล่าง</div>
-            <div class="big-ring-wrap">
-              <svg viewBox="0 0 100 100">
-                <circle class="ring-pulse" cx="50" cy="50" r="42" style="animation-duration:5s; stroke:var(--forest-light);"/>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sage)" stroke-width="9"/>
-              </svg>
-              <div class="countdown">
-                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/></svg>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-block" onclick="startReading()">เริ่มตรวจวัด</button>
-            <div style="margin-top:10px;">
-              <span class="link" style="font-size:12.5px;color:var(--muted);cursor:pointer;text-decoration:underline;" onclick="openManualEntry()">กรอกค่าด้วยตนเอง</span>
-            </div>
+      <!-- ============ PATIENTS ============ -->
+      <div class="view" id="view-patients">
+        <div class="section-title" style="margin-top:6px;">ผู้ป่วยทั้งหมด</div>
+        <div class="card" style="padding:12px;margin-bottom:14px;">
+          <div class="field" style="margin-bottom:0;">
+            <input type="text" id="patientSearch" placeholder="ค้นหาด้วยรหัสผู้ป่วยหรือชื่อ..." oninput="renderPatients()">
           </div>
-
-          <div class="card flow-stage" id="stageCountdown" style="display:none;">
-            <div class="flow-title">หายใจเข้า–ออกตามจังหวะ</div>
-            <div class="flow-sub">อุปกรณ์กำลังเก็บตัวอย่างอากาศจากปอดส่วนลึก</div>
-            <div class="big-ring-wrap">
-              <svg viewBox="0 0 100 100">
-                <circle class="ring-pulse" cx="50" cy="50" r="42" style="animation-duration:4.4s; stroke:var(--forest);"/>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sage)" stroke-width="9"/>
-              </svg>
-              <div class="countdown">
-                <div class="n" id="countdownNum">12</div>
-                <div class="l" id="countdownLabel">หายใจเข้า</div>
-              </div>
-            </div>
-          </div>
-
-          <div id="stageResult" style="display:none;"></div>
         </div>
-
+        <button class="btn btn-primary btn-block mb-2" onclick="openPatientModal()">+ เพิ่มผู้ป่วยใหม่</button>
+        <div class="list" id="patientsList" style="margin-top:12px;"></div>
       </div>
 
-      <!-- ============ TRENDS ============ -->
-      <div class="view" id="view-trends">
-        <div class="section-title" style="margin-top:6px;">แนวโน้มค่าแอมโมเนียในลมหายใจ</div>
+      <!-- ============ PATIENT DETAIL ============ -->
+      <div class="view" id="view-patient">
+        <button class="back-link" onclick="goTo('patients')">← กลับไปหน้าผู้ป่วย</button>
+        <div class="card" style="padding:20px;margin-top:12px;">
+          <div class="patient-head">
+            <div class="avatar" id="patientAvatar" style="background:var(--forest);">—</div>
+            <div>
+              <div class="profile-name" id="patientName" style="font-size:17px;">—</div>
+              <div class="profile-meta" id="patientMeta">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">แนวโน้มค่า NH₃ ที่แก้ไขแล้ว</div>
         <div class="card" style="padding:18px;">
-          <div style="display:flex;gap:8px;margin-bottom:14px;">
-            <button class="btn btn-ghost btn-sm range-btn active" data-range="14" onclick="setRange(14,this)">14 วัน</button>
-            <button class="btn btn-ghost btn-sm range-btn" data-range="30" onclick="setRange(30,this)">30 วัน</button>
-            <button class="btn btn-ghost btn-sm range-btn" data-range="9999" onclick="setRange(9999,this)">ทั้งหมด</button>
-          </div>
-          <div id="chartHolder"></div>
+          <div id="patientChartHolder"></div>
         </div>
 
-        <div class="section-title">ประวัติทั้งหมด</div>
-        <div class="list" id="fullHistoryList"></div>
+        <button class="btn btn-ghost btn-block mt-2" onclick="openSessionModal()">+ บันทึกผลด้วยตนเอง (ไม่มีอุปกรณ์)</button>
+
+        <div class="section-title">ประวัติการตรวจ</div>
+        <div class="list" id="patientSessionsList"></div>
       </div>
 
-      <!-- ============ PROFILE ============ -->
-      <div class="view" id="view-profile">
-        <div class="section-title" style="margin-top:6px;">คนในการดูแล</div>
-        <div class="list" id="profileList"></div>
-        <button class="btn btn-ghost btn-block mt-2" onclick="openProfileModal()">+ เพิ่มสมาชิก</button>
+      <!-- ============ SESSION RESULT ============ -->
+      <div class="view" id="view-session">
+        <button class="back-link" onclick="goTo('patient', {id: state.selectedPatientId})">← กลับไปประวัติผู้ป่วย</button>
+        <div id="sessionDetailHolder" style="margin-top:12px;"></div>
+      </div>
 
-        <div class="section-title">บัญชี</div>
+      <!-- ============ LIVE TEST ============ -->
+      <div class="view" id="view-live">
+        <button class="back-link" onclick="goTo('home')">← กลับหน้าหลัก</button>
+        <div id="liveDetailHolder" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- ============ ACCOUNT ============ -->
+      <div class="view" id="view-account">
+        <div class="section-title" style="margin-top:6px;">บัญชี</div>
         <div class="card" style="padding:16px 18px;">
           <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">เข้าสู่ระบบด้วย <b id="accountEmail" style="color:var(--ink);">—</b></div>
           <button class="btn btn-ghost btn-block" onclick="signOut()">ออกจากระบบ</button>
         </div>
 
-        <div class="section-title">การตั้งค่าและข้อมูล</div>
-        <div class="card" style="padding:8px;">
-          <div class="settings-grid">
-            <button class="btn btn-ghost" onclick="exportBackup()">ส่งออกข้อมูล (Backup)</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('restoreInput').click()">นำเข้าข้อมูล (Restore)</button>
-            <button class="btn btn-ghost" onclick="exportCSV()">ส่งออก CSV</button>
-            <button class="btn btn-ghost btn-danger" onclick="confirmClearAll()">ลบข้อมูลทั้งหมด</button>
-          </div>
-          <input type="file" id="restoreInput" accept="application/json" style="display:none" onchange="importBackup(event)">
+        <div class="section-title">ส่งออกข้อมูล</div>
+        <div class="card" style="padding:12px;">
+          <button class="btn btn-ghost btn-block" onclick="exportCSV()">ส่งออกผลตรวจทั้งหมด (CSV)</button>
         </div>
 
-        <div class="section-title">เกี่ยวกับอุปกรณ์</div>
+        <div class="section-title">เกี่ยวกับระบบ</div>
         <div class="card" style="padding:18px;font-size:13px;color:var(--muted);line-height:1.6;">
-          พัฒนาจากผลงาน <b style="color:var(--ink);">"Smart Electronic Nose for Early CKD Screening"</b> อุปกรณ์จมูกอิเล็กทรอนิกส์อัจฉริยะสำหรับคัดกรองโรคไตเรื้อรังระยะเริ่มต้น ใช้เซนเซอร์วัดก๊าซแอมโมเนียร่วมกับระบบคัดแยกอากาศจากถุงลมปอดส่วนลึก ส่งข้อมูลผ่าน IoT เพื่อบันทึกและติดตามแนวโน้มสุขภาพในระยะยาว
+          อุปกรณ์ตรวจวัด <b style="color:var(--ink);">NephroBreath</b> ใช้เซนเซอร์ก๊าซแอมโมเนียคู่ (เปรียบเทียบลมหายใจกับอากาศแวดล้อม) ร่วมกับเซนเซอร์ CO₂/อุณหภูมิ/ความชื้น และระบบคัดแยกอากาศจากถุงลมปอดส่วนลึก ("alveolar air gating") ข้อมูลจากอุปกรณ์ แอปมือถือ และเว็บแดชบอร์ดนี้ ซิงค์กันผ่าน Supabase แบบเรียลไทม์
         </div>
       </div>
 
@@ -236,60 +180,77 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
       <span>หน้าหลัก</span>
     </button>
-    <button class="nav-btn" data-view="reading" onclick="goTo('reading')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
-      <span>ตรวจวัด</span>
+    <button class="nav-btn" data-view="patients" onclick="goTo('patients')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 19c1.2-3.5 4-4.5 6.5-4.5s5.3 1 6.5 4.5"/><circle cx="17" cy="8" r="2.5"/><path d="M16 14c2.4.2 4 1.4 4.8 3.7"/></svg>
+      <span>ผู้ป่วย</span>
     </button>
-    <button class="nav-btn" data-view="trends" onclick="goTo('trends')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg>
-      <span>แนวโน้ม</span>
-    </button>
-    <button class="nav-btn" data-view="profile" onclick="goTo('profile')">
+    <button class="nav-btn" data-view="account" onclick="goTo('account')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5 7-5s5.5 1 7 5"/></svg>
-      <span>โปรไฟล์</span>
+      <span>บัญชี</span>
     </button>
   </div>
 
 </div>
 
-<!-- Profile modal -->
-<div class="modal-overlay" id="profileModalOverlay">
+<!-- New patient modal -->
+<div class="modal-overlay" id="patientModalOverlay">
   <div class="modal">
-    <h3>เพิ่มสมาชิก</h3>
+    <h3>เพิ่มผู้ป่วยใหม่</h3>
     <div class="field">
-      <label>ชื่อ</label>
-      <input type="text" id="newProfileName" placeholder="เช่น คุณยายสมศรี">
+      <label>รหัสผู้ป่วย (Patient ID)</label>
+      <input type="text" id="newPatientCode" placeholder="เช่น CKD-0042">
     </div>
     <div class="field">
-      <label>อายุ (ปี)</label>
-      <input type="number" id="newProfileAge" placeholder="65">
+      <label>ชื่อ (ไม่บังคับ)</label>
+      <input type="text" id="newPatientName" placeholder="เช่น คุณสมศรี">
     </div>
     <div class="field">
-      <label>สีประจำตัว</label>
-      <div class="color-pick" id="colorPick"></div>
+      <label>เพศ</label>
+      <select id="newPatientSex">
+        <option value="">ไม่ระบุ</option>
+        <option value="male">ชาย</option>
+        <option value="female">หญิง</option>
+        <option value="other">อื่น ๆ</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>ปีเกิด (ไม่บังคับ)</label>
+      <input type="number" id="newPatientBirthYear" placeholder="เช่น 1960">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost btn-block" onclick="closeModal('profileModalOverlay')">ยกเลิก</button>
-      <button class="btn btn-primary btn-block" onclick="saveNewProfile()">บันทึก</button>
+      <button class="btn btn-ghost btn-block" onclick="closeModal('patientModalOverlay')">ยกเลิก</button>
+      <button class="btn btn-primary btn-block" onclick="saveNewPatient()">บันทึก</button>
     </div>
   </div>
 </div>
 
-<!-- Manual entry modal -->
-<div class="modal-overlay" id="manualModalOverlay">
+<!-- Manual session modal -->
+<div class="modal-overlay" id="sessionModalOverlay">
   <div class="modal">
-    <h3>กรอกค่าด้วยตนเอง</h3>
+    <h3>บันทึกผลด้วยตนเอง</h3>
     <div class="field">
-      <label>ค่าแอมโมเนีย NH₃ (ppm)</label>
-      <input type="number" step="0.01" id="manualNh3" placeholder="เช่น 1.2">
+      <label>ค่า NH₃ จากลมหายใจ (tube)</label>
+      <input type="number" step="0.01" id="manualTubeNh3" placeholder="เช่น 2.4">
+    </div>
+    <div class="field">
+      <label>ค่า NH₃ อากาศแวดล้อม (ambient)</label>
+      <input type="number" step="0.01" id="manualAmbientNh3" placeholder="เช่น 0.3">
+    </div>
+    <div class="field">
+      <label>อุณหภูมิ °C (ไม่บังคับ)</label>
+      <input type="number" step="0.1" id="manualTemp" placeholder="25">
+    </div>
+    <div class="field">
+      <label>ความชื้น %RH (ไม่บังคับ)</label>
+      <input type="number" step="0.1" id="manualHumidity" placeholder="50">
     </div>
     <div class="field">
       <label>บันทึกเพิ่มเติม (ไม่บังคับ)</label>
-      <input type="text" id="manualNote" placeholder="เช่น ตรวจหลังตื่นนอน">
+      <input type="text" id="manualNotes" placeholder="เช่น ตรวจหลังตื่นนอน">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost btn-block" onclick="closeModal('manualModalOverlay')">ยกเลิก</button>
-      <button class="btn btn-primary btn-block" onclick="saveManualEntry()">บันทึกผล</button>
+      <button class="btn btn-ghost btn-block" onclick="closeModal('sessionModalOverlay')">ยกเลิก</button>
+      <button class="btn btn-primary btn-block" onclick="saveManualSession()">บันทึกผล</button>
     </div>
   </div>
 </div>
@@ -298,85 +259,144 @@
 
 <script>
 /* =========================================================
-   STATE
+   CONSTANTS
 ========================================================= */
-const STATUS = {
-  normal:  { label:'ปกติ',            color:'#1F4B3C', bg:'#EAF0E7', detail:'ค่าแอมโมเนียอยู่ในช่วงปกติ ดูแลสุขภาพต่อไปและตรวจซ้ำตามรอบ' },
-  watch:   { label:'ควรเฝ้าระวัง',     color:'#C8932E', bg:'#FBF1DC', detail:'ค่าสูงกว่าปกติเล็กน้อย ลองดื่มน้ำให้เพียงพอและตรวจซ้ำในอีก 2–3 วัน' },
-  elevated:{ label:'ควรพบแพทย์',       color:'#D97B56', bg:'#FBE9E0', detail:'ค่าสูงกว่าช่วงปกติ ควรปรึกษาแพทย์เพื่อตรวจยืนยันด้วยการตรวจเลือดหรือค่า eGFR' }
+const RISK = {
+  normal:   { label:'ปกติ',            color:'#1F4B3C', bg:'#EAF0E7', detail:'ค่า NH₃ ที่แก้ไขแล้วอยู่ในช่วงปกติ ดูแลสุขภาพต่อไปและตรวจซ้ำตามรอบ' },
+  elevated: { label:'มีความเสี่ยงสูงขึ้น', color:'#D97B56', bg:'#FBE9E0', detail:'ค่าสูงกว่าช่วงปกติ ควรปรึกษาแพทย์เพื่อตรวจยืนยันเพิ่มเติม เช่น ค่า eGFR หรือการตรวจเลือด' }
 };
-const PALETTE = ['#1F4B3C','#3D7A63','#C8932E','#D97B56','#5E6F67','#7C9A8E'];
-
-let state = {
-  deviceConnected:false,
-  profiles:[],
-  readings:[],
-  activeProfileId:null,
-  range:14
-};
+const RESULT_DISCLAIMER = 'ผลนี้เป็นการคัดกรองความเสี่ยงเบื้องต้นจากลมหายใจเท่านั้น ไม่ใช่การวินิจฉัยทางการแพทย์';
+const STATUS_LABEL = { in_progress:'กำลังตรวจ', gating:'กำลังเก็บตัวอย่าง', completed:'เสร็จสิ้น', error:'ผิดพลาด' };
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 let session = null;
 let booted = false;
 let realtimeChannels = [];
 
-function statusFromPpm(ppm){
-  if(ppm < 1.5) return 'normal';
-  if(ppm < 3.0) return 'watch';
-  return 'elevated';
+let state = {
+  view: 'home',
+  patients: [],
+  recentSessions: [],
+  patientSessions: [],
+  liveSessions: [],
+  selectedPatientId: null,
+  selectedSessionId: null,
+  selectedPatient: null,
+  selectedSession: null
+};
+
+/* =========================================================
+   DATA LOADING
+========================================================= */
+async function loadPatients(){
+  const { data, error } = await sb.from('patients').select('*').order('created_at', { ascending:false });
+  if(error){ showToast('โหลดรายชื่อผู้ป่วยไม่สำเร็จ'); return; }
+  state.patients = data || [];
 }
 
-function mapReading(r){
-  return { id:r.id, profileId:r.profile_id, nh3:Number(r.nh3), note:r.note||'', ts:new Date(r.ts).getTime() };
+async function loadRecentSessions(){
+  const { data, error } = await sb.from('test_sessions')
+    .select('*, patients(patient_code, name)')
+    .order('started_at', { ascending:false })
+    .limit(8);
+  if(error){ showToast('โหลดการตรวจล่าสุดไม่สำเร็จ'); return; }
+  state.recentSessions = data || [];
 }
 
-async function loadProfiles(){
-  const { data, error } = await sb.from('profiles').select('*').order('created_at');
-  if(error){ showToast('โหลดข้อมูลโปรไฟล์ไม่สำเร็จ'); return; }
-
-  if(!data || data.length === 0){
-    const { data: created, error: cErr } = await sb.from('profiles')
-      .insert({ household_id: session.user.id, name:'คุณเอง', color: PALETTE[0] })
-      .select().single();
-    if(cErr){ showToast('สร้างโปรไฟล์เริ่มต้นไม่สำเร็จ'); return; }
-    state.profiles = [created];
-  } else {
-    state.profiles = data;
-  }
-
-  const savedActive = localStorage.getItem('nb_active');
-  state.activeProfileId = (savedActive && state.profiles.find(p=>p.id===savedActive)) ? savedActive : state.profiles[0].id;
+async function loadLiveSessions(){
+  const { data, error } = await sb.from('test_sessions')
+    .select('*, patients(patient_code, name)')
+    .in('status', ['in_progress','gating'])
+    .order('started_at', { ascending:false });
+  if(error) return;
+  state.liveSessions = data || [];
+  updateLivePill();
 }
 
-async function loadReadings(){
-  const { data, error } = await sb.from('readings').select('*').order('ts');
+async function loadPatientSessions(patientId){
+  const { data, error } = await sb.from('test_sessions')
+    .select('*').eq('patient_id', patientId)
+    .order('started_at', { ascending:true });
   if(error){ showToast('โหลดประวัติการตรวจไม่สำเร็จ'); return; }
-  state.readings = (data||[]).map(mapReading);
+  state.patientSessions = data || [];
 }
 
-async function loadData(){
-  await loadProfiles();
-  await loadReadings();
+async function loadSessionDetail(sessionId){
+  const { data, error } = await sb.from('test_sessions')
+    .select('*, patients(patient_code, name, sex, birth_year)')
+    .eq('id', sessionId).single();
+  if(error){ showToast('โหลดผลตรวจไม่สำเร็จ'); return null; }
+  state.selectedSession = data;
+  return data;
+}
+
+function todayCount(){
+  const start = new Date(); start.setHours(0,0,0,0);
+  return state.recentSessions.filter(s => new Date(s.started_at) >= start).length;
+}
+
+/* =========================================================
+   REALTIME
+========================================================= */
+function teardownRealtime(){
+  realtimeChannels.forEach(ch => sb.removeChannel(ch));
+  realtimeChannels = [];
 }
 
 function subscribeRealtime(){
-  realtimeChannels.forEach(ch=>sb.removeChannel(ch));
-  realtimeChannels = [];
-  const householdId = session.user.id;
-
-  const refresh = async ()=>{
-    await loadData();
-    const activeView = document.querySelector('.view.active').id.replace('view-','');
-    if(activeView==='home') renderHome();
-    if(activeView==='trends') renderTrends();
-    if(activeView==='profile') renderProfile();
-  };
-
+  teardownRealtime();
   const ch = sb.channel('nb-sync')
-    .on('postgres_changes', { event:'*', schema:'public', table:'profiles', filter:`household_id=eq.${householdId}` }, refresh)
-    .on('postgres_changes', { event:'*', schema:'public', table:'readings', filter:`household_id=eq.${householdId}` }, refresh)
+    .on('postgres_changes', { event:'*', schema:'public', table:'patients' }, onPatientsChange)
+    .on('postgres_changes', { event:'*', schema:'public', table:'test_sessions' }, onSessionsChange)
     .subscribe();
   realtimeChannels.push(ch);
+}
+
+async function onPatientsChange(){
+  await loadPatients();
+  if(state.view==='patients') renderPatients();
+  if(state.view==='patient') renderPatientDetail();
+}
+
+async function onSessionsChange(payload){
+  await loadRecentSessions();
+  await loadLiveSessions();
+  if(state.view==='home') renderRecentSessions();
+
+  const row = payload.new && payload.new.id ? payload.new : null;
+
+  if(state.view==='patient' && state.selectedPatientId){
+    await loadPatientSessions(state.selectedPatientId);
+    renderPatientDetail();
+  }
+
+  if((state.view==='session' || state.view==='live') && state.selectedSessionId && row && row.id===state.selectedSessionId){
+    const updated = await loadSessionDetail(state.selectedSessionId);
+    if(state.view==='live' && updated && updated.status==='completed'){
+      showToast('ผลตรวจเสร็จสมบูรณ์');
+      goTo('session', { id: state.selectedSessionId });
+      return;
+    }
+    if(state.view==='session') renderSessionDetail();
+    if(state.view==='live') renderLiveDetail();
+  }
+}
+
+function updateLivePill(){
+  const pill = document.getElementById('livePill');
+  if(state.liveSessions.length){
+    pill.style.display='flex';
+    pill.classList.add('connected');
+    document.getElementById('livePillText').textContent =
+      state.liveSessions.length===1 ? 'กำลังตรวจอยู่' : `กำลังตรวจอยู่ (${state.liveSessions.length})`;
+  } else {
+    pill.style.display='none';
+  }
+}
+
+function goToLive(){
+  if(!state.liveSessions.length) return;
+  goTo('live', { id: state.liveSessions[0].id });
 }
 
 /* =========================================================
@@ -386,7 +406,7 @@ let authMode = 'login';
 
 function toggleAuthMode(){
   authMode = authMode === 'login' ? 'signup' : 'login';
-  document.getElementById('authTitle').textContent = authMode==='login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+  document.getElementById('authTitle').textContent = authMode==='login' ? 'เข้าสู่ระบบเจ้าหน้าที่' : 'สมัครสมาชิกเจ้าหน้าที่';
   document.getElementById('authSubmitBtn').textContent = authMode==='login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
   document.getElementById('authSwitchText').textContent = authMode==='login' ? 'ยังไม่มีบัญชี?' : 'มีบัญชีอยู่แล้ว?';
   document.getElementById('authSwitchLink').textContent = authMode==='login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
@@ -440,16 +460,17 @@ sb.auth.onAuthStateChange((event, sessionObj)=>{
     }
   } else {
     booted = false;
-    realtimeChannels.forEach(ch=>sb.removeChannel(ch));
-    realtimeChannels = [];
-    state = { deviceConnected:false, profiles:[], readings:[], activeProfileId:null, range:14 };
+    teardownRealtime();
+    state = { view:'home', patients:[], recentSessions:[], patientSessions:[], liveSessions:[], selectedPatientId:null, selectedSessionId:null, selectedPatient:null, selectedSession:null };
     document.getElementById('authScreen').style.display='flex';
     document.getElementById('appShell').style.display='none';
   }
 });
 
 async function boot(){
-  await loadData();
+  await loadPatients();
+  await loadRecentSessions();
+  await loadLiveSessions();
   subscribeRealtime();
   document.getElementById('accountEmail').textContent = session.user.email;
   goTo('home');
@@ -458,24 +479,40 @@ async function boot(){
 /* =========================================================
    NAVIGATION
 ========================================================= */
-function goTo(view){
+async function goTo(view, params){
+  params = params || {};
+  state.view = view;
+
+  if(view==='patient'){
+    state.selectedPatientId = params.id;
+    state.selectedPatient = state.patients.find(p=>p.id===params.id) || null;
+    await loadPatientSessions(params.id);
+  }
+  if(view==='session'){
+    state.selectedSessionId = params.id;
+    const data = await loadSessionDetail(params.id);
+    if(data) state.selectedPatientId = data.patient_id;
+  }
+  if(view==='live'){
+    state.selectedSessionId = params.id;
+    await loadSessionDetail(params.id);
+  }
+
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   document.querySelectorAll('.side-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
-  if(view==='reading') resetReadingFlow();
-  if(view==='trends') renderTrends();
-  if(view==='profile') renderProfile();
-  if(view==='home') renderHome();
+
+  renderCurrentView();
   window.scrollTo(0,0);
 }
 
-function toggleDeviceStatus(){
-  state.deviceConnected = !state.deviceConnected;
-  const pill = document.getElementById('statusPill');
-  pill.classList.toggle('connected', state.deviceConnected);
-  document.getElementById('statusText').textContent = state.deviceConnected ? 'เชื่อมต่ออุปกรณ์แล้ว' : 'ยังไม่เชื่อมต่ออุปกรณ์';
-  showToast(state.deviceConnected ? 'เชื่อมต่ออุปกรณ์ E-Nose สำเร็จ' : 'ยกเลิกการเชื่อมต่อแล้ว');
+function renderCurrentView(){
+  if(state.view==='home') renderRecentSessions();
+  if(state.view==='patients') renderPatients();
+  if(state.view==='patient') renderPatientDetail();
+  if(state.view==='session') renderSessionDetail();
+  if(state.view==='live') renderLiveDetail();
 }
 
 function showToast(msg){
@@ -485,94 +522,45 @@ function showToast(msg){
   clearTimeout(t._tm);
   t._tm = setTimeout(()=>t.classList.remove('show'), 2200);
 }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* =========================================================
+   FORMAT HELPERS
+========================================================= */
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'2-digit'}) + ' · ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtNum(v, digits){
+  if(v===null || v===undefined) return '—';
+  return Number(v).toFixed(digits===undefined?2:digits);
+}
+function riskOf(session){
+  return RISK[session.risk_level] || null;
+}
+function esc(str){
+  const d = document.createElement('div');
+  d.textContent = str===null||str===undefined ? '' : String(str);
+  return d.innerHTML;
+}
+function statusChipHtml(status){
+  const live = status==='in_progress' || status==='gating';
+  return `<span class="status-chip ${live?'live':''} ${status==='error'?'err':''}">${STATUS_LABEL[status]||status}</span>`;
+}
 
 /* =========================================================
    HOME
 ========================================================= */
-function activeProfile(){
-  return state.profiles.find(p=>p.id===state.activeProfileId) || state.profiles[0];
-}
-function readingsForActive(){
-  return state.readings.filter(r=>r.profileId===state.activeProfileId).sort((a,b)=>a.ts-b.ts);
-}
+function renderRecentSessions(){
+  document.getElementById('statPatients').textContent = state.patients.length;
+  document.getElementById('statToday').textContent = todayCount();
 
-function renderHome(){
-  const prof = activeProfile();
-  document.getElementById('profileNameLabel').textContent = prof ? prof.name : '—';
-  const hour = new Date().getHours();
-  document.getElementById('greetingText').textContent = hour<12?'สวัสดีตอนเช้า':hour<18?'สวัสดีตอนบ่าย':'สวัสดีตอนเย็น';
-
-  const rs = readingsForActive();
-  const ring = document.getElementById('ringFg');
-  const ringVal = document.getElementById('ringStatusValue');
-  const heroMeta = document.getElementById('heroMeta');
-  const statNh3 = document.getElementById('statNh3');
-  const statLast = document.getElementById('statLast');
-
-  if(rs.length===0){
-    ring.style.stroke = '#C9D6CE';
-    ring.setAttribute('stroke-dashoffset', 251.2);
-    ringVal.textContent = 'ยังไม่มีข้อมูล';
-    ringVal.style.color = 'var(--ink)';
-    heroMeta.textContent = 'ตรวจครั้งแรกเพื่อเริ่มติดตามสุขภาพไตของคุณ';
-    statNh3.innerHTML = '— <span class="stat-unit">ppm</span>';
-    statLast.textContent = '—';
-  } else {
-    const last = rs[rs.length-1];
-    const st = STATUS[statusFromPpm(last.nh3)];
-    const pct = Math.min(last.nh3/4, 1);
-    ring.style.stroke = st.color;
-    ring.setAttribute('stroke-dashoffset', (251.2*(1-pct)).toFixed(1));
-    ringVal.textContent = st.label;
-    ringVal.style.color = st.color;
-    heroMeta.textContent = 'ตรวจล่าสุด ' + relativeDate(last.ts);
-    statNh3.innerHTML = last.nh3.toFixed(2) + ' <span class="stat-unit">ppm</span>';
-    statLast.textContent = formatDate(last.ts);
+  const list = document.getElementById('recentSessionsList');
+  if(!state.recentSessions.length){
+    list.innerHTML = emptyHtml('ยังไม่มีการตรวจ', 'เพิ่มผู้ป่วยและบันทึกผลครั้งแรกเพื่อเริ่มต้น');
+    return;
   }
-
-  // sparkline
-  document.getElementById('sparklineHolder').innerHTML = buildSparkline(rs.slice(-14));
-  const delta = document.getElementById('trendDelta');
-  if(rs.length>=2){
-    const d = rs[rs.length-1].nh3 - rs[rs.length-2].nh3;
-    delta.textContent = (d>=0?'+':'') + d.toFixed(2) + ' ppm';
-    delta.style.color = d>0.05 ? '#D97B56' : (d < -0.05 ? '#1F4B3C' : 'var(--forest-light)');
-  } else {
-    delta.textContent = '—';
-  }
-
-  // recent list (last 5)
-  const recent = rs.slice(-5).reverse();
-  document.getElementById('recentList').innerHTML = recent.length ? recent.map(r=>historyItemHtml(r)).join('') : emptyHtml('ยังไม่มีประวัติการตรวจ','กดปุ่ม "ตรวจวัดวันนี้" เพื่อเริ่มต้น');
-}
-
-function relativeDate(ts){
-  const diff = Date.now()-ts;
-  const days = Math.floor(diff/86400000);
-  if(days<=0) return 'วันนี้';
-  if(days===1) return 'เมื่อวาน';
-  return days+' วันที่แล้ว';
-}
-function formatDate(ts){
-  const d = new Date(ts);
-  return d.toLocaleDateString('th-TH', {day:'numeric', month:'short'}) + ' · ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-}
-
-function historyItemHtml(r){
-  const st = STATUS[statusFromPpm(r.nh3)];
-  return `<div class="card list-item">
-    <div class="li-left">
-      <span class="li-tag" style="background:${st.color}"></span>
-      <div>
-        <div class="li-date">${formatDate(r.ts)}</div>
-        <div class="li-sub">${r.note ? r.note : st.label}</div>
-      </div>
-    </div>
-    <div>
-      <div class="li-value">${r.nh3.toFixed(2)} ppm</div>
-      <div class="li-status" style="color:${st.color}">${st.label}</div>
-    </div>
-  </div>`;
+  list.innerHTML = state.recentSessions.map(s => sessionRowHtml(s, true)).join('');
 }
 
 function emptyHtml(title, sub){
@@ -582,302 +570,318 @@ function emptyHtml(title, sub){
   </div>`;
 }
 
-function buildSparkline(rs){
-  if(rs.length<2) return `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:12.5px;">ยังไม่มีข้อมูลเพียงพอสำหรับกราฟ</div>`;
-  const w=600,h=70,pad=6;
-  const vals = rs.map(r=>r.nh3);
-  const min = Math.min(...vals,0.3), max = Math.max(...vals,2);
-  const stepX = (w-pad*2)/(rs.length-1);
-  const pts = rs.map((r,i)=>{
-    const x = pad+i*stepX;
-    const y = h-pad-((r.nh3-min)/(max-min))*(h-pad*2);
-    return [x,y];
-  });
-  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-  const last = pts[pts.length-1];
-  const lastStatus = STATUS[statusFromPpm(rs[rs.length-1].nh3)];
-  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:70px;overflow:visible;">
-    <path d="${path}" fill="none" stroke="${lastStatus.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="${last[0]}" cy="${last[1]}" r="4.5" fill="${lastStatus.color}"/>
-  </svg>`;
-}
-
-/* =========================================================
-   READING FLOW
-========================================================= */
-function resetReadingFlow(){
-  document.getElementById('stageIdle').style.display='block';
-  document.getElementById('stageCountdown').style.display='none';
-  document.getElementById('stageResult').style.display='none';
-}
-
-let countdownTimer=null;
-function startReading(){
-  document.getElementById('stageIdle').style.display='none';
-  document.getElementById('stageCountdown').style.display='block';
-  let secs = 12;
-  const num = document.getElementById('countdownNum');
-  const label = document.getElementById('countdownLabel');
-  num.textContent = secs;
-  let phase=true;
-  countdownTimer = setInterval(()=>{
-    secs--;
-    num.textContent = secs;
-    label.textContent = phase ? 'หายใจออก' : 'หายใจเข้า';
-    phase=!phase;
-    if(secs<=0){
-      clearInterval(countdownTimer);
-      finishReading();
-    }
-  },1000);
-}
-
-async function finishReading(){
-  const rs = readingsForActive();
-  let base = rs.length ? rs[rs.length-1].nh3 : 1.0;
-  let val = base + (Math.random()-0.45)*0.4;
-  val = Math.max(0.3, Math.round(val*100)/100);
-  const { data, error } = await sb.from('readings').insert({
-    profile_id: state.activeProfileId,
-    household_id: session.user.id,
-    nh3: val,
-    ts: new Date().toISOString()
-  }).select().single();
-  if(error){ showToast('บันทึกผลไม่สำเร็จ'); resetReadingFlow(); return; }
-  const r = mapReading(data);
-  state.readings.push(r);
-  showResult(r);
-}
-
-function showResult(r){
-  document.getElementById('stageCountdown').style.display='none';
-  const st = STATUS[statusFromPpm(r.nh3)];
-  document.getElementById('stageResult').innerHTML = `
-    <div class="card result-banner" style="background:${st.bg};">
-      <div class="result-icon" style="background:${st.color}33;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${st.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/></svg>
-      </div>
-      <div class="result-status" style="color:${st.color};text-align:center;">${st.label}</div>
-      <div class="result-detail">${st.detail}</div>
-      <div class="result-readings">
-        <div><div class="v">${r.nh3.toFixed(2)}</div><div class="l">NH₃ ppm</div></div>
-        <div><div class="v">${formatDate(r.ts).split(' · ')[1]}</div><div class="l">เวลา</div></div>
+function sessionRowHtml(s, showPatient){
+  const live = s.status==='in_progress' || s.status==='gating';
+  const risk = riskOf(s);
+  const dotColor = live ? '#C8932E' : (risk ? risk.color : '#6B6459');
+  const patientLabel = showPatient && s.patients ? (s.patients.name ? `${esc(s.patients.patient_code)} · ${esc(s.patients.name)}` : esc(s.patients.patient_code)) : '';
+  const onclick = live ? `goTo('live', {id:'${s.id}'})` : `goTo('session', {id:'${s.id}'})`;
+  return `<div class="card list-item" onclick="${onclick}" style="cursor:pointer;">
+    <div class="li-left">
+      <span class="li-tag" style="background:${dotColor}"></span>
+      <div>
+        <div class="li-date">${patientLabel || fmtDate(s.started_at)}</div>
+        <div class="li-sub">${patientLabel ? fmtDate(s.started_at) : ''} ${statusChipHtml(s.status)}</div>
       </div>
     </div>
-    <button class="btn btn-primary btn-block" onclick="goTo('home')">เสร็จสิ้น กลับหน้าหลัก</button>
-    <button class="btn btn-ghost btn-block mt-2" onclick="resetReadingFlow()">ตรวจอีกครั้ง</button>
-  `;
-  document.getElementById('stageResult').style.display='block';
-  showToast('บันทึกผลการตรวจแล้ว');
-}
-
-function openManualEntry(){
-  document.getElementById('manualNh3').value='';
-  document.getElementById('manualNote').value='';
-  document.getElementById('manualModalOverlay').classList.add('show');
-}
-async function saveManualEntry(){
-  const v = parseFloat(document.getElementById('manualNh3').value);
-  if(isNaN(v) || v<0){ showToast('กรุณากรอกค่าที่ถูกต้อง'); return; }
-  const note = document.getElementById('manualNote').value.trim();
-  const { data, error } = await sb.from('readings').insert({
-    profile_id: state.activeProfileId,
-    household_id: session.user.id,
-    nh3: Math.round(v*100)/100,
-    note,
-    ts: new Date().toISOString()
-  }).select().single();
-  if(error){ showToast('บันทึกผลไม่สำเร็จ'); return; }
-  const r = mapReading(data);
-  state.readings.push(r);
-  closeModal('manualModalOverlay');
-  showResult(r);
+    <div>
+      <div class="li-value">${s.corrected_nh3!==null ? fmtNum(s.corrected_nh3)+' ppm' : '—'}</div>
+      <div class="li-status" style="color:${risk?risk.color:'var(--muted)'}">${risk?risk.label:''}</div>
+    </div>
+  </div>`;
 }
 
 /* =========================================================
-   TRENDS
+   PATIENTS
 ========================================================= */
-function setRange(days, btn){
-  state.range = days;
-  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTrends();
+function renderPatients(){
+  const q = (document.getElementById('patientSearch').value || '').trim().toLowerCase();
+  const filtered = !q ? state.patients : state.patients.filter(p =>
+    (p.patient_code||'').toLowerCase().includes(q) || (p.name||'').toLowerCase().includes(q));
+
+  const list = document.getElementById('patientsList');
+  if(!filtered.length){
+    list.innerHTML = emptyHtml('ไม่พบผู้ป่วย', 'ลองค้นหาด้วยรหัสอื่น หรือเพิ่มผู้ป่วยใหม่');
+    return;
+  }
+  list.innerHTML = filtered.map(p => {
+    const initial = (p.name || p.patient_code).trim().charAt(0).toUpperCase();
+    return `<div class="card profile-row" onclick="goTo('patient', {id:'${p.id}'})">
+      <div class="avatar" style="background:var(--forest);">${initial}</div>
+      <div>
+        <div class="profile-name">${esc(p.patient_code)}${p.name ? ' · '+esc(p.name) : ''}</div>
+        <div class="profile-meta">${p.sex ? sexLabel(p.sex)+' · ' : ''}${p.birth_year ? 'เกิดปี '+esc(p.birth_year) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function sexLabel(s){ return s==='male'?'ชาย':s==='female'?'หญิง':'อื่น ๆ'; }
+
+function openPatientModal(){
+  document.getElementById('newPatientCode').value='';
+  document.getElementById('newPatientName').value='';
+  document.getElementById('newPatientSex').value='';
+  document.getElementById('newPatientBirthYear').value='';
+  document.getElementById('patientModalOverlay').classList.add('show');
 }
 
-function renderTrends(){
-  const all = readingsForActive();
-  const cutoff = Date.now() - state.range*86400000;
-  const rs = state.range>=9999 ? all : all.filter(r=>r.ts>=cutoff);
-  document.getElementById('chartHolder').innerHTML = buildChart(rs);
-  const full = all.slice().reverse();
-  document.getElementById('fullHistoryList').innerHTML = full.length ? full.map(r=>historyItemHtml(r)).join('') : emptyHtml('ยังไม่มีประวัติ','เริ่มตรวจวัดเพื่อสร้างกราฟแนวโน้ม');
+async function saveNewPatient(){
+  const code = document.getElementById('newPatientCode').value.trim();
+  if(!code){ showToast('กรุณากรอกรหัสผู้ป่วย'); return; }
+  const name = document.getElementById('newPatientName').value.trim();
+  const sex = document.getElementById('newPatientSex').value || null;
+  const birthYearRaw = document.getElementById('newPatientBirthYear').value;
+  const birth_year = birthYearRaw ? parseInt(birthYearRaw, 10) : null;
+
+  const { data, error } = await sb.from('patients').insert({
+    patient_code: code, name, sex, birth_year, created_by: session.user.id
+  }).select().single();
+
+  if(error){
+    showToast(error.code==='23505' ? 'รหัสผู้ป่วยนี้มีอยู่แล้ว' : 'เพิ่มผู้ป่วยไม่สำเร็จ');
+    return;
+  }
+  state.patients.unshift(data);
+  closeModal('patientModalOverlay');
+  showToast('เพิ่มผู้ป่วยแล้ว');
+  goTo('patient', { id: data.id });
 }
 
-function buildChart(rs){
-  if(rs.length<2) return `<div style="text-align:center;padding:50px 0;color:var(--muted);font-size:13px;">ข้อมูลยังไม่พอสำหรับแสดงกราฟ (ต้องมีอย่างน้อย 2 ครั้ง)</div>`;
-  const w=680,h=220,padL=34,padR=10,padT=18,padB=24;
-  const vals = rs.map(r=>r.nh3);
+/* =========================================================
+   PATIENT DETAIL
+========================================================= */
+function renderPatientDetail(){
+  const p = state.selectedPatient || state.patients.find(pp=>pp.id===state.selectedPatientId);
+  if(!p) return;
+  state.selectedPatient = p;
+  const initial = (p.name || p.patient_code).trim().charAt(0).toUpperCase();
+  document.getElementById('patientAvatar').textContent = initial;
+  document.getElementById('patientName').textContent = p.patient_code + (p.name ? ' · '+p.name : '');
+  document.getElementById('patientMeta').textContent =
+    [p.sex?sexLabel(p.sex):null, p.birth_year?('เกิดปี '+p.birth_year):null, state.patientSessions.length+' ครั้งที่ตรวจ']
+      .filter(Boolean).join(' · ');
+
+  document.getElementById('patientChartHolder').innerHTML = buildTrendChart(state.patientSessions);
+
+  const list = document.getElementById('patientSessionsList');
+  const sorted = state.patientSessions.slice().reverse();
+  list.innerHTML = sorted.length ? sorted.map(s=>sessionRowHtml(s,false)).join('') : emptyHtml('ยังไม่มีประวัติ','บันทึกผลครั้งแรกของผู้ป่วยรายนี้');
+}
+
+function buildTrendChart(sessions){
+  const done = sessions.filter(s => s.corrected_nh3!==null);
+  if(done.length<2) return `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;">ข้อมูลยังไม่พอสำหรับแสดงแนวโน้ม (ต้องมีผลตรวจที่เสร็จสมบูรณ์อย่างน้อย 2 ครั้ง)</div>`;
+  const w=680,h=200,padL=34,padR=10,padT=18,padB=24;
+  const vals = done.map(s=>Number(s.corrected_nh3));
   const min = 0, max = Math.max(4, Math.ceil(Math.max(...vals)));
-  const stepX = (w-padL-padR)/(rs.length-1);
+  const stepX = (w-padL-padR)/(done.length-1);
   const yOf = v => padT + (1-(v-min)/(max-min))*(h-padT-padB);
-  const pts = rs.map((r,i)=>[padL+i*stepX, yOf(r.nh3)]);
-  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const pts = done.map((s,i)=>[padL+i*stepX, yOf(Number(s.corrected_nh3))]);
+  const path = pts.map((pt,i)=> (i===0?'M':'L')+pt[0].toFixed(1)+','+pt[1].toFixed(1)).join(' ');
   const areaPath = path + ` L${pts[pts.length-1][0].toFixed(1)},${(h-padB)} L${pts[0][0].toFixed(1)},${(h-padB)} Z`;
+  const thresholdY = yOf(3.0).toFixed(1);
 
-  // threshold lines
-  const watchY = yOf(1.5).toFixed(1);
-  const elevY = yOf(3.0).toFixed(1);
-
-  const dots = pts.map((p,i)=>{
-    const st = STATUS[statusFromPpm(rs[i].nh3)];
-    return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${st.color}" stroke="#fff" stroke-width="1"/>`;
+  const dots = pts.map((pt,i)=>{
+    const risk = riskOf(done[i]);
+    return `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="3.4" fill="${risk?risk.color:'#6B6459'}" stroke="#fff" stroke-width="1"/>`;
   }).join('');
 
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;">
-    <line x1="${padL}" y1="${elevY}" x2="${w-padR}" y2="${elevY}" stroke="#D97B56" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
-    <line x1="${padL}" y1="${watchY}" x2="${w-padR}" y2="${watchY}" stroke="#C8932E" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
-    <text x="${w-padR}" y="${elevY-4}" text-anchor="end" font-size="9.5" fill="#D97B56" font-family="IBM Plex Mono, monospace">3.0</text>
-    <text x="${w-padR}" y="${watchY-4}" text-anchor="end" font-size="9.5" fill="#C8932E" font-family="IBM Plex Mono, monospace">1.5</text>
+    <line x1="${padL}" y1="${thresholdY}" x2="${w-padR}" y2="${thresholdY}" stroke="#D97B56" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
+    <text x="${w-padR}" y="${thresholdY-4}" text-anchor="end" font-size="9.5" fill="#D97B56" font-family="IBM Plex Mono, monospace">3.0 ppm</text>
     <path d="${areaPath}" fill="#1F4B3C" opacity="0.06"/>
     <path d="${path}" fill="none" stroke="#1F4B3C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     ${dots}
   </svg>
   <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:2px;font-family:'IBM Plex Mono',monospace;">
-    <span>${formatDate(rs[0].ts).split(' · ')[0]}</span>
-    <span>${formatDate(rs[rs.length-1].ts).split(' · ')[0]}</span>
+    <span>${fmtDate(done[0].started_at).split(' · ')[0]}</span>
+    <span>${fmtDate(done[done.length-1].started_at).split(' · ')[0]}</span>
   </div>`;
 }
 
 /* =========================================================
-   PROFILE
+   MANUAL SESSION ENTRY
 ========================================================= */
-function renderProfile(){
-  document.getElementById('profileList').innerHTML = state.profiles.map(p=>{
-    const initial = p.name.trim().charAt(0).toUpperCase();
-    const active = p.id===state.activeProfileId;
-    return `<div class="card profile-row" onclick="switchProfile('${p.id}')">
-      <div class="avatar" style="background:${p.color||'#1F4B3C'}">${initial}</div>
-      <div>
-        <div class="profile-name">${p.name}</div>
-        <div class="profile-meta">${p.age?p.age+' ปี · ':''}${readingsForId(p.id).length} ครั้งที่ตรวจ</div>
-      </div>
-      ${active?'<span class="profile-active-tag">กำลังดูแล</span>':''}
-    </div>`;
-  }).join('');
-}
-function readingsForId(id){ return state.readings.filter(r=>r.profileId===id); }
-
-function switchProfile(id){
-  state.activeProfileId = id;
-  localStorage.setItem('nb_active', id);
-  renderProfile();
-  renderHome();
-  showToast('สลับไปยังโปรไฟล์: ' + activeProfile().name);
+function openSessionModal(){
+  document.getElementById('manualTubeNh3').value='';
+  document.getElementById('manualAmbientNh3').value='';
+  document.getElementById('manualTemp').value='';
+  document.getElementById('manualHumidity').value='';
+  document.getElementById('manualNotes').value='';
+  document.getElementById('sessionModalOverlay').classList.add('show');
 }
 
-function openProfileModal(){
-  document.getElementById('newProfileName').value='';
-  document.getElementById('newProfileAge').value='';
-  const pick = document.getElementById('colorPick');
-  pick.innerHTML = PALETTE.map((c,i)=>`<div class="swatch ${i===0?'sel':''}" style="background:${c}" onclick="selectColor(this,'${c}')"></div>`).join('');
-  pick.dataset.selected = PALETTE[0];
-  document.getElementById('profileModalOverlay').classList.add('show');
-}
-function selectColor(el,c){
-  document.querySelectorAll('#colorPick .swatch').forEach(s=>s.classList.remove('sel'));
-  el.classList.add('sel');
-  document.getElementById('colorPick').dataset.selected = c;
-}
-async function saveNewProfile(){
-  const name = document.getElementById('newProfileName').value.trim();
-  if(!name){ showToast('กรุณากรอกชื่อ'); return; }
-  const age = document.getElementById('newProfileAge').value;
-  const color = document.getElementById('colorPick').dataset.selected || PALETTE[0];
-  const { data, error } = await sb.from('profiles').insert({
-    household_id: session.user.id, name, age, color
+async function saveManualSession(){
+  const tube = parseFloat(document.getElementById('manualTubeNh3').value);
+  const ambient = parseFloat(document.getElementById('manualAmbientNh3').value);
+  if(isNaN(tube) || isNaN(ambient)){ showToast('กรุณากรอกค่า NH₃ ทั้งสองค่า'); return; }
+  const temp = document.getElementById('manualTemp').value;
+  const humidity = document.getElementById('manualHumidity').value;
+  const notes = document.getElementById('manualNotes').value.trim();
+
+  const { data, error } = await sb.from('test_sessions').insert({
+    patient_id: state.selectedPatientId,
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+    tube_nh3: tube,
+    ambient_nh3: ambient,
+    temperature: temp ? parseFloat(temp) : null,
+    humidity: humidity ? parseFloat(humidity) : null,
+    notes
   }).select().single();
-  if(error){ showToast('เพิ่มสมาชิกไม่สำเร็จ'); return; }
-  state.profiles.push(data);
-  state.activeProfileId = data.id;
-  localStorage.setItem('nb_active', data.id);
-  closeModal('profileModalOverlay');
-  renderProfile();
-  showToast('เพิ่มสมาชิกแล้ว');
-}
 
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+  if(error){ showToast('บันทึกผลไม่สำเร็จ'); return; }
+  state.patientSessions.push(data);
+  closeModal('sessionModalOverlay');
+  showToast('บันทึกผลแล้ว');
+  goTo('session', { id: data.id });
+}
 
 /* =========================================================
-   BACKUP / RESTORE / CSV
+   SESSION RESULT
 ========================================================= */
-function exportBackup(){
-  const data = { profiles:state.profiles, readings:state.readings, exportedAt:new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'nephrobreath-backup-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  showToast('ส่งออกข้อมูลแล้ว');
-}
-function importBackup(ev){
-  const file = ev.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async e=>{
-    try{
-      const data = JSON.parse(e.target.result);
-      if(!data.profiles || !data.readings){ showToast('ไฟล์ไม่ถูกต้อง'); return; }
+function renderSessionDetail(){
+  const s = state.selectedSession;
+  if(!s) return;
+  const risk = riskOf(s);
+  const p = s.patients;
 
-      showToast('กำลังนำเข้าข้อมูล...');
-      const idMap = {};
-      for(const p of data.profiles){
-        const { data: created, error } = await sb.from('profiles').insert({
-          household_id: session.user.id, name:p.name, age:p.age||'', color:p.color||PALETTE[0]
-        }).select().single();
-        if(error) continue;
-        idMap[p.id] = created.id;
-      }
-      for(const r of data.readings){
-        const newProfileId = idMap[r.profileId];
-        if(!newProfileId) continue;
-        await sb.from('readings').insert({
-          profile_id:newProfileId, household_id:session.user.id,
-          nh3:r.nh3, note:r.note||'', ts:new Date(r.ts).toISOString()
-        });
-      }
-      await loadData();
-      renderProfile(); renderHome();
-      showToast('นำเข้าข้อมูลสำเร็จ');
-    }catch(err){ showToast('ไม่สามารถอ่านไฟล์ได้'); }
-  };
-  reader.readAsText(file);
+  let html = '';
+  if(risk){
+    html += `<div class="card result-banner" style="background:${risk.bg};">
+      <div class="result-icon" style="background:${risk.color}33;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${risk.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/></svg>
+      </div>
+      <div class="result-status" style="color:${risk.color};text-align:center;">${risk.label}</div>
+      <div class="result-detail">${risk.detail}</div>
+      <div class="result-readings">
+        <div><div class="v">${fmtNum(s.corrected_nh3)}</div><div class="l">NH₃ แก้ไขแล้ว (ppm)</div></div>
+        <div><div class="v">${fmtNum(s.tube_nh3)}</div><div class="l">Tube ppm</div></div>
+        <div><div class="v">${fmtNum(s.ambient_nh3)}</div><div class="l">Ambient ppm</div></div>
+      </div>
+    </div>`;
+  } else {
+    html += `<div class="card" style="padding:22px;text-align:center;">${statusChipHtml(s.status)}<div style="margin-top:8px;color:var(--muted);font-size:13px;">ยังไม่มีผลสรุป</div></div>`;
+  }
+
+  html += `<div class="disclaimer" style="margin-top:14px;">${RESULT_DISCLAIMER}</div>`;
+
+  html += `<div class="section-title">ผู้ป่วย</div>
+    <div class="card" style="padding:16px 18px;font-size:13.5px;">
+      ${p ? esc(p.patient_code) + (p.name ? ' · '+esc(p.name) : '') : '—'}
+      <div class="profile-meta" style="margin-top:4px;">${fmtDate(s.started_at)}</div>
+    </div>`;
+
+  if(s.peak_response!==null || s.absorption_slope!==null || s.auc!==null){
+    html += `<div class="section-title">คุณลักษณะที่สกัดได้ (Features)</div>
+      <div class="feature-grid">
+        <div class="card stat-card"><div class="stat-label">Peak ΔR/R0</div><div class="stat-value">${fmtNum(s.peak_response,4)}</div></div>
+        <div class="card stat-card"><div class="stat-label">Slope</div><div class="stat-value">${fmtNum(s.absorption_slope,6)}</div></div>
+        <div class="card stat-card"><div class="stat-label">AUC</div><div class="stat-value">${fmtNum(s.auc,4)}</div></div>
+      </div>`;
+  }
+
+  if(s.co2_curve){
+    html += `<div class="section-title">กราฟ CO₂ ระหว่างหายใจออก</div>
+      <div class="card" style="padding:18px;">${buildCo2Chart(s)}</div>`;
+  }
+
+  html += `<div class="section-title">สภาพแวดล้อม</div>
+    <div class="feature-grid">
+      <div class="card stat-card"><div class="stat-label">อุณหภูมิ</div><div class="stat-value">${s.temperature!==null?fmtNum(s.temperature,1)+'°C':'—'}</div></div>
+      <div class="card stat-card"><div class="stat-label">ความชื้น</div><div class="stat-value">${s.humidity!==null?fmtNum(s.humidity,1)+'%':'—'}</div></div>
+    </div>`;
+
+  if(s.notes){
+    html += `<div class="section-title">บันทึกเพิ่มเติม</div>
+      <div class="card" style="padding:14px 16px;font-size:13.5px;color:var(--muted);">${esc(s.notes)}</div>`;
+  }
+
+  document.getElementById('sessionDetailHolder').innerHTML = html;
 }
-function exportCSV(){
-  const rows = [['profile','timestamp','nh3_ppm','status','note']];
-  state.readings.forEach(r=>{
-    const p = state.profiles.find(pp=>pp.id===r.profileId);
-    rows.push([p?p.name:'', new Date(r.ts).toISOString(), r.nh3, STATUS[statusFromPpm(r.nh3)].label, r.note||'']);
+
+function buildCo2Chart(s){
+  const curve = Array.isArray(s.co2_curve) ? s.co2_curve : [];
+  if(curve.length<2) return `<div style="text-align:center;padding:30px 0;color:var(--muted);font-size:13px;">ไม่มีข้อมูลกราฟ CO₂</div>`;
+  const w=680,h=200,padL=34,padR=10,padT=18,padB=24;
+  const ts = curve.map(pt=>Number(pt.t));
+  const co2s = curve.map(pt=>Number(pt.co2));
+  const maxT = Math.max(...ts), maxCo2 = Math.max(5, Math.ceil(Math.max(...co2s)));
+  const xOf = t => padL + (t/maxT)*(w-padL-padR);
+  const yOf = c => padT + (1-(c/maxCo2))*(h-padT-padB);
+  const pts = curve.map(pt=>[xOf(Number(pt.t)), yOf(Number(pt.co2))]);
+  const path = pts.map((pt,i)=> (i===0?'M':'L')+pt[0].toFixed(1)+','+pt[1].toFixed(1)).join(' ');
+  const thresholdY = yOf(4.0).toFixed(1);
+
+  let gateMark = '';
+  if(s.gating_t!==null && s.gating_t!==undefined){
+    const gx = xOf(Number(s.gating_t)).toFixed(1);
+    const gy = yOf(Number(s.gating_co2!==null?s.gating_co2:4)).toFixed(1);
+    gateMark = `<line x1="${gx}" y1="${padT}" x2="${gx}" y2="${h-padB}" stroke="#1F4B3C" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <circle cx="${gx}" cy="${gy}" r="4.5" fill="#1F4B3C" stroke="#fff" stroke-width="1.5"/>
+      <text x="${gx}" y="${padT-4}" text-anchor="middle" font-size="9.5" fill="#1F4B3C" font-family="IBM Plex Mono, monospace">Gating</text>`;
+  }
+
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;overflow:visible;">
+    <line x1="${padL}" y1="${thresholdY}" x2="${w-padR}" y2="${thresholdY}" stroke="#C8932E" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+    <text x="${w-padR}" y="${thresholdY-4}" text-anchor="end" font-size="9.5" fill="#C8932E" font-family="IBM Plex Mono, monospace">4.0% alveolar</text>
+    <path d="${path}" fill="none" stroke="#3D7A63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${gateMark}
+  </svg>`;
+}
+
+/* =========================================================
+   LIVE TEST
+========================================================= */
+function renderLiveDetail(){
+  const s = state.selectedSession;
+  const holder = document.getElementById('liveDetailHolder');
+  if(!s){ holder.innerHTML=''; return; }
+  const p = s.patients;
+  const lastCo2 = Array.isArray(s.co2_curve) && s.co2_curve.length ? s.co2_curve[s.co2_curve.length-1] : null;
+
+  holder.innerHTML = `
+    <div class="card flow-stage" style="padding:34px 20px;">
+      <div class="flow-title">${statusChipHtml(s.status)}</div>
+      <div class="flow-sub">${p ? esc(p.patient_code) + (p.name?' · '+esc(p.name):'') : ''}</div>
+      <div class="big-ring-wrap" style="width:160px;height:160px;">
+        <svg viewBox="0 0 100 100">
+          <circle class="ring-pulse" cx="50" cy="50" r="42" style="animation-duration:3.2s; stroke:var(--forest);"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--sage)" stroke-width="9"/>
+        </svg>
+        <div class="countdown">
+          <div class="n" style="font-size:26px;">${lastCo2 ? fmtNum(lastCo2.co2,1)+'%' : '—'}</div>
+          <div class="l">CO₂ ล่าสุด</div>
+        </div>
+      </div>
+      <div style="color:var(--muted);font-size:13px;">กำลังรอข้อมูลจากอุปกรณ์ หน้านี้จะอัปเดตอัตโนมัติเมื่อผลเสร็จสมบูรณ์</div>
+    </div>`;
+}
+
+/* =========================================================
+   CSV EXPORT
+========================================================= */
+async function exportCSV(){
+  const { data, error } = await sb.from('test_sessions')
+    .select('*, patients(patient_code, name)')
+    .order('started_at', { ascending:true });
+  if(error){ showToast('ส่งออกข้อมูลไม่สำเร็จ'); return; }
+
+  const rows = [['patient_code','patient_name','started_at','status','tube_nh3','ambient_nh3','corrected_nh3','peak_response','absorption_slope','auc','risk_level','risk_score','temperature','humidity','notes']];
+  (data||[]).forEach(s=>{
+    rows.push([
+      s.patients?.patient_code||'', s.patients?.name||'', s.started_at, s.status,
+      s.tube_nh3, s.ambient_nh3, s.corrected_nh3, s.peak_response, s.absorption_slope, s.auc,
+      s.risk_level||'', s.risk_score, s.temperature, s.humidity, s.notes||''
+    ]);
   });
-  const csv = rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = rows.map(row=>row.map(c=>`"${String(c===null||c===undefined?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'nephrobreath-readings.csv';
+  a.download = 'nephrobreath-sessions-'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
   showToast('ส่งออก CSV แล้ว');
-}
-async function confirmClearAll(){
-  if(!confirm('ลบข้อมูลการตรวจและโปรไฟล์ทั้งหมด แล้วเริ่มต้นใหม่?')) return;
-  const profileIds = state.profiles.map(p=>p.id);
-  if(profileIds.length){
-    await sb.from('readings').delete().in('profile_id', profileIds);
-    await sb.from('profiles').delete().in('id', profileIds);
-  }
-  localStorage.removeItem('nb_active');
-  state.profiles=[]; state.readings=[]; state.activeProfileId=null;
-  await loadData();
-  renderProfile(); renderHome();
-  showToast('ล้างข้อมูลแล้ว');
 }
 </script>
 </body>

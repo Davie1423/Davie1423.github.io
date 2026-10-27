@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>อนุญาตการเข้าถึง · NephroBreath</title>
+<meta name="theme-color" content="#1F4B3C">
+<link rel="stylesheet" href="../../Style/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../../supabase-config.js"></script>
+</head>
+<body>
+
+<div class="auth-screen" id="screen">
+  <div class="card auth-card" id="card">
+    <div class="brand" style="justify-content:center;margin-bottom:18px;">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z"/><path d="M9.5 12c1 1.2 2 1.2 3 0"/></svg>
+      </div>
+      <div class="brand-name">NephroBreath</div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loadingState">
+      <h3>กำลังตรวจสอบคำขอ…</h3>
+    </div>
+
+    <!-- Login required state -->
+    <div id="loginState" style="display:none;">
+      <h3>เข้าสู่ระบบเพื่อดำเนินการต่อ</h3>
+      <div class="field" style="text-align:left;">
+        <label>อีเมล</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field" style="text-align:left;">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="auth-error" id="loginError" style="display:none;"></div>
+      <button class="btn btn-primary btn-block" id="loginBtn" onclick="handleLogin()">เข้าสู่ระบบ</button>
+    </div>
+
+    <!-- Consent state -->
+    <div id="consentState" style="display:none;">
+      <h3>คำขอเข้าถึงบัญชีของคุณ</h3>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:-10px 0 18px;">
+        <strong id="clientName" style="color:var(--ink);"></strong>
+        ขอสิทธิ์เข้าถึงบัญชี NephroBreath ของคุณ
+      </p>
+      <div id="scopeList" style="text-align:left;background:var(--sage);border-radius:var(--r-md);padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--ink);"></div>
+      <div class="auth-error" id="consentError" style="display:none;"></div>
+      <button class="btn btn-primary btn-block" id="approveBtn" onclick="handleApprove()" style="margin-bottom:10px;">อนุญาต</button>
+      <button class="btn btn-ghost btn-block" id="denyBtn" onclick="handleDeny()">ปฏิเสธ</button>
+    </div>
+
+    <!-- Error state (no authorization_id, expired, etc.) -->
+    <div id="errorState" style="display:none;">
+      <h3>ไม่สามารถดำเนินการได้</h3>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;" id="errorMessage">ลิงก์นี้ไม่ถูกต้องหรือหมดอายุแล้ว</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+const params = new URLSearchParams(window.location.search);
+const authorizationId = params.get('authorization_id');
+
+function show(id){
+  ['loadingState','loginState','consentState','errorState'].forEach(s=>{
+    document.getElementById(s).style.display = (s===id) ? 'block' : 'none';
+  });
+}
+
+function showError(msg){
+  document.getElementById('errorMessage').textContent = msg;
+  show('errorState');
+}
+
+async function loadAuthorization(){
+  if(!authorizationId){
+    showError('ลิงก์นี้ไม่มีรหัสคำขอ (authorization_id) กรุณาลองเริ่มกระบวนการใหม่จากแอปที่ร้องขอ');
+    return;
+  }
+
+  const { data: { user } } = await sb.auth.getUser();
+  if(!user){
+    show('loginState');
+    return;
+  }
+
+  await fetchAndRenderConsent();
+}
+
+async function fetchAndRenderConsent(){
+  show('loadingState');
+  const { data, error } = await sb.auth.oauth.getAuthorizationDetails(authorizationId);
+
+  if(error){
+    showError(error.message || 'ไม่สามารถโหลดคำขอนี้ได้');
+    return;
+  }
+
+  if(!('authorization_id' in data)){
+    // Already consented previously — redirect straight through.
+    window.location.href = data.redirect_url;
+    return;
+  }
+
+  document.getElementById('clientName').textContent = data.client?.name || 'แอปพลิเคชันภายนอก';
+  const scopes = (data.scope || '').split(' ').filter(Boolean);
+  const scopeListEl = document.getElementById('scopeList');
+  scopeListEl.innerHTML = scopes.length
+    ? scopes.map(s => `<div style="padding:3px 0;">• ${s}</div>`).join('')
+    : '<div style="padding:3px 0;">• สิทธิ์การเข้าถึงพื้นฐาน</div>';
+
+  show('consentState');
+}
+
+async function handleLogin(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  if(error){
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  await fetchAndRenderConsent();
+}
+
+async function handleApprove(){
+  document.getElementById('approveBtn').disabled = true;
+  document.getElementById('denyBtn').disabled = true;
+  const { data, error } = await sb.auth.oauth.approveAuthorization(authorizationId);
+  if(error){
+    document.getElementById('consentError').textContent = error.message;
+    document.getElementById('consentError').style.display = 'block';
+    document.getElementById('approveBtn').disabled = false;
+    document.getElementById('denyBtn').disabled = false;
+    return;
+  }
+  window.location.href = data.redirect_url;
+}
+
+async function handleDeny(){
+  document.getElementById('approveBtn').disabled = true;
+  document.getElementById('denyBtn').disabled = true;
+  const { data, error } = await sb.auth.oauth.denyAuthorization(authorizationId);
+  if(error){
+    document.getElementById('consentError').textContent = error.message;
+    document.getElementById('consentError').style.display = 'block';
+    document.getElementById('approveBtn').disabled = false;
+    document.getElementById('denyBtn').disabled = false;
+    return;
+  }
+  window.location.href = data.redirect_url;
+}
+
+loadAuthorization();
+</script>
+</body>
+</html>
