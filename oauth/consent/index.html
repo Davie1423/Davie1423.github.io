@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<div class="auth-screen" id="screen">
+<div class="auth-screen" id="screen" style="display:flex;">
   <div class="card auth-card" id="card">
     <div class="brand" style="justify-content:center;margin-bottom:18px;">
       <div class="brand-mark">
@@ -20,14 +20,20 @@
       <div class="brand-name">NephroBreath</div>
     </div>
 
-    <!-- Loading state -->
-    <div id="loadingState">
-      <h3>กำลังตรวจสอบคำขอ…</h3>
+    <!-- ===== loading ===== -->
+    <div id="stateLoading">
+      <h3>กำลังตรวจสอบคำขอ...</h3>
     </div>
 
-    <!-- Login required state -->
-    <div id="loginState" style="display:none;">
-      <h3 id="loginTitle">เข้าสู่ระบบเพื่อดำเนินการต่อ</h3>
+    <!-- ===== error ===== -->
+    <div id="stateError" style="display:none;">
+      <h3>เกิดข้อผิดพลาด</h3>
+      <div class="auth-error" id="errorText" style="display:block;"></div>
+    </div>
+
+    <!-- ===== login / signup (reuses the same account system as the dashboard) ===== -->
+    <div id="stateAuth" style="display:none;">
+      <h3 id="authTitle">เข้าสู่ระบบเพื่อดำเนินการต่อ</h3>
       <div class="field" style="text-align:left;">
         <label>อีเมล</label>
         <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
@@ -36,68 +42,116 @@
         <label>รหัสผ่าน</label>
         <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <div class="auth-error" id="loginError" style="display:none;"></div>
-      <button class="btn btn-primary btn-block" id="loginBtn" onclick="handleLogin()">เข้าสู่ระบบ</button>
+      <div class="auth-error" id="authError" style="display:none;"></div>
+      <button class="btn btn-primary btn-block" id="authSubmitBtn" onclick="handleAuthSubmit()">เข้าสู่ระบบ</button>
       <div class="auth-switch">
         <span id="authSwitchText">ยังไม่มีบัญชี?</span>
         <span class="link" id="authSwitchLink" onclick="toggleAuthMode()">สมัครสมาชิก</span>
       </div>
     </div>
 
-    <!-- Consent state -->
-    <div id="consentState" style="display:none;">
-      <h3>คำขอเข้าถึงบัญชีของคุณ</h3>
-      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:-10px 0 18px;">
-        <strong id="clientName" style="color:var(--ink);"></strong>
-        ขอสิทธิ์เข้าถึงบัญชี NephroBreath ของคุณ
+    <!-- ===== consent ===== -->
+    <div id="stateConsent" style="display:none;">
+      <h3>อนุญาตให้เข้าถึงบัญชีของคุณ?</h3>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 18px;">
+        แอป <strong id="clientName"></strong> ขอเข้าถึงบัญชี
+        <strong id="accountEmailText"></strong> ของคุณ
       </p>
-      <div id="scopeList" style="text-align:left;background:var(--sage);border-radius:var(--r-md);padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--ink);"></div>
+      <div class="field" style="text-align:left;" id="scopeField">
+        <label>สิทธิ์ที่ขอ</label>
+        <ul id="scopeList" style="margin:0;padding-left:18px;font-size:13px;color:var(--ink);line-height:1.8;"></ul>
+      </div>
       <div class="auth-error" id="consentError" style="display:none;"></div>
-      <button class="btn btn-primary btn-block" id="approveBtn" onclick="handleApprove()" style="margin-bottom:10px;">อนุญาต</button>
-      <button class="btn btn-ghost btn-block" id="denyBtn" onclick="handleDeny()">ปฏิเสธ</button>
-    </div>
-
-    <!-- Error state (no authorization_id, expired, etc.) -->
-    <div id="errorState" style="display:none;">
-      <h3>ไม่สามารถดำเนินการได้</h3>
-      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;" id="errorMessage">ลิงก์นี้ไม่ถูกต้องหรือหมดอายุแล้ว</p>
+      <button class="btn btn-primary btn-block" id="approveBtn" onclick="handleDecision('approve')" style="margin-bottom:10px;">อนุญาต</button>
+      <button class="btn btn-ghost btn-block" id="denyBtn" onclick="handleDecision('deny')">ปฏิเสธ</button>
+      <div class="auth-switch">
+        <span class="link" onclick="switchAccount()">ไม่ใช่คุณ? ออกจากระบบ</span>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
 const params = new URLSearchParams(window.location.search);
 const authorizationId = params.get('authorization_id');
 
-function show(id){
-  ['loadingState','loginState','consentState','errorState'].forEach(s=>{
-    document.getElementById(s).style.display = (s===id) ? 'block' : 'none';
+let authMode = 'login';
+let authDetails = null;
+
+function showState(name){
+  ['stateLoading','stateError','stateAuth','stateConsent'].forEach(id=>{
+    document.getElementById(id).style.display = id === name ? 'block' : 'none';
   });
 }
 
-function showError(msg){
-  document.getElementById('errorMessage').textContent = msg;
-  show('errorState');
+function showError(message){
+  document.getElementById('errorText').textContent = message;
+  showState('stateError');
+}
+
+function toggleAuthMode(){
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  document.getElementById('authSubmitBtn').textContent = authMode==='login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+  document.getElementById('authSwitchText').textContent = authMode==='login' ? 'ยังไม่มีบัญชี?' : 'มีบัญชีอยู่แล้ว?';
+  document.getElementById('authSwitchLink').textContent = authMode==='login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  const err = document.getElementById('authError');
+  err.style.display = 'none';
+}
+
+async function handleAuthSubmit(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.style.color = '#B14B36';
+  errEl.style.display = 'none';
+
+  if(!email || !password){
+    errEl.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const { error } = authMode === 'login'
+    ? await sb.auth.signInWithPassword({ email, password })
+    : await sb.auth.signUp({ email, password });
+
+  if(error){
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if(authMode === 'signup'){
+    errEl.style.color = 'var(--forest)';
+    errEl.textContent = 'สมัครสำเร็จ กรุณาเข้าสู่ระบบ (หรือยืนยันอีเมลก่อน หากเปิดใช้งานอยู่)';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  await loadAuthorization();
+}
+
+async function switchAccount(){
+  await sb.auth.signOut();
+  showState('stateAuth');
 }
 
 async function loadAuthorization(){
   if(!authorizationId){
-    showError('ลิงก์นี้ไม่มีรหัสคำขอ (authorization_id) กรุณาลองเริ่มกระบวนการใหม่จากแอปที่ร้องขอ');
+    showError('ลิงก์นี้ไม่สมบูรณ์ ไม่พบ authorization_id');
     return;
   }
 
   const { data: { user } } = await sb.auth.getUser();
   if(!user){
-    show('loginState');
+    showState('stateAuth');
     return;
   }
 
-  await fetchAndRenderConsent();
-}
+  showState('stateLoading');
 
-async function fetchAndRenderConsent(){
-  show('loadingState');
   const { data, error } = await sb.auth.oauth.getAuthorizationDetails(authorizationId);
 
   if(error){
@@ -105,92 +159,62 @@ async function fetchAndRenderConsent(){
     return;
   }
 
+  // User already approved this request previously — Supabase returns a
+  // redirect_url directly instead of authorization details to show again.
   if(!('authorization_id' in data)){
-    // Already consented previously — redirect straight through.
     window.location.href = data.redirect_url;
     return;
   }
 
+  authDetails = data;
   document.getElementById('clientName').textContent = data.client?.name || 'แอปพลิเคชันภายนอก';
-  const scopes = (data.scope || '').split(' ').filter(Boolean);
-  const scopeListEl = document.getElementById('scopeList');
-  scopeListEl.innerHTML = scopes.length
-    ? scopes.map(s => `<div style="padding:3px 0;">• ${s}</div>`).join('')
-    : '<div style="padding:3px 0;">• สิทธิ์การเข้าถึงพื้นฐาน</div>';
+  document.getElementById('accountEmailText').textContent = user.email;
 
-  show('consentState');
+  const scopes = (data.scope || '').trim();
+  const scopeField = document.getElementById('scopeField');
+  const scopeList = document.getElementById('scopeList');
+  scopeList.innerHTML = '';
+  if(scopes){
+    scopes.split(' ').forEach(s=>{
+      const li = document.createElement('li');
+      li.textContent = s;
+      scopeList.appendChild(li);
+    });
+    scopeField.style.display = 'block';
+  } else {
+    scopeField.style.display = 'none';
+  }
+
+  showState('stateConsent');
 }
 
-let isSignUpMode = false;
-
-function toggleAuthMode(){
-  isSignUpMode = !isSignUpMode;
-  document.getElementById('loginTitle').textContent = isSignUpMode ? 'สมัครสมาชิกเพื่อดำเนินการต่อ' : 'เข้าสู่ระบบเพื่อดำเนินการต่อ';
-  document.getElementById('loginBtn').textContent = isSignUpMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
-  document.getElementById('authSwitchText').textContent = isSignUpMode ? 'มีบัญชีอยู่แล้ว?' : 'ยังไม่มีบัญชี?';
-  document.getElementById('authSwitchLink').textContent = isSignUpMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
-  document.getElementById('loginError').style.display = 'none';
-}
-
-async function handleLogin(){
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  const errEl = document.getElementById('loginError');
-  const btn = document.getElementById('loginBtn');
+async function handleDecision(decision){
+  const errEl = document.getElementById('consentError');
   errEl.style.display = 'none';
-  btn.disabled = true;
-
-  const { error } = isSignUpMode
-    ? await sb.auth.signUp({ email, password })
-    : await sb.auth.signInWithPassword({ email, password });
-
-  btn.disabled = false;
-  if(error){
-    errEl.textContent = error.message;
-    errEl.style.display = 'block';
-    return;
-  }
-
-  const { data: { user } } = await sb.auth.getUser();
-  if(!user){
-    // Signed up but email confirmation is required before a session exists.
-    errEl.textContent = 'กรุณายืนยันอีเมลของคุณ แล้วกลับมาเข้าสู่ระบบอีกครั้ง';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  await fetchAndRenderConsent();
-}
-
-async function handleApprove(){
   document.getElementById('approveBtn').disabled = true;
   document.getElementById('denyBtn').disabled = true;
-  const { data, error } = await sb.auth.oauth.approveAuthorization(authorizationId);
+
+  const { data, error } = decision === 'approve'
+    ? await sb.auth.oauth.approveAuthorization(authorizationId)
+    : await sb.auth.oauth.denyAuthorization(authorizationId);
+
   if(error){
-    document.getElementById('consentError').textContent = error.message;
-    document.getElementById('consentError').style.display = 'block';
+    errEl.textContent = error.message || 'ดำเนินการไม่สำเร็จ';
+    errEl.style.display = 'block';
     document.getElementById('approveBtn').disabled = false;
     document.getElementById('denyBtn').disabled = false;
     return;
   }
+
   window.location.href = data.redirect_url;
 }
 
-async function handleDeny(){
-  document.getElementById('approveBtn').disabled = true;
-  document.getElementById('denyBtn').disabled = true;
-  const { data, error } = await sb.auth.oauth.denyAuthorization(authorizationId);
-  if(error){
-    document.getElementById('consentError').textContent = error.message;
-    document.getElementById('consentError').style.display = 'block';
-    document.getElementById('approveBtn').disabled = false;
-    document.getElementById('denyBtn').disabled = false;
-    return;
-  }
-  window.location.href = data.redirect_url;
-}
+sb.auth.onAuthStateChange((event, session)=>{
+  if(session) loadAuthorization();
+});
 
 loadAuthorization();
 </script>
+
 </body>
 </html>
