@@ -27,7 +27,7 @@
 
     <!-- Login required state -->
     <div id="loginState" style="display:none;">
-      <h3>เข้าสู่ระบบเพื่อดำเนินการต่อ</h3>
+      <h3 id="loginTitle">เข้าสู่ระบบเพื่อดำเนินการต่อ</h3>
       <div class="field" style="text-align:left;">
         <label>อีเมล</label>
         <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
@@ -38,6 +38,10 @@
       </div>
       <div class="auth-error" id="loginError" style="display:none;"></div>
       <button class="btn btn-primary btn-block" id="loginBtn" onclick="handleLogin()">เข้าสู่ระบบ</button>
+      <div class="auth-switch">
+        <span id="authSwitchText">ยังไม่มีบัญชี?</span>
+        <span class="link" id="authSwitchLink" onclick="toggleAuthMode()">สมัครสมาชิก</span>
+      </div>
     </div>
 
     <!-- Consent state -->
@@ -117,6 +121,17 @@ async function fetchAndRenderConsent(){
   show('consentState');
 }
 
+let isSignUpMode = false;
+
+function toggleAuthMode(){
+  isSignUpMode = !isSignUpMode;
+  document.getElementById('loginTitle').textContent = isSignUpMode ? 'สมัครสมาชิกเพื่อดำเนินการต่อ' : 'เข้าสู่ระบบเพื่อดำเนินการต่อ';
+  document.getElementById('loginBtn').textContent = isSignUpMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  document.getElementById('authSwitchText').textContent = isSignUpMode ? 'มีบัญชีอยู่แล้ว?' : 'ยังไม่มีบัญชี?';
+  document.getElementById('authSwitchLink').textContent = isSignUpMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+  document.getElementById('loginError').style.display = 'none';
+}
+
 async function handleLogin(){
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
@@ -125,11 +140,21 @@ async function handleLogin(){
   errEl.style.display = 'none';
   btn.disabled = true;
 
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const { error } = isSignUpMode
+    ? await sb.auth.signUp({ email, password })
+    : await sb.auth.signInWithPassword({ email, password });
 
   btn.disabled = false;
   if(error){
     errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const { data: { user } } = await sb.auth.getUser();
+  if(!user){
+    // Signed up but email confirmation is required before a session exists.
+    errEl.textContent = 'กรุณายืนยันอีเมลของคุณ แล้วกลับมาเข้าสู่ระบบอีกครั้ง';
     errEl.style.display = 'block';
     return;
   }
