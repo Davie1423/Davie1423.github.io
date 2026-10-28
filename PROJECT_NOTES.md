@@ -33,6 +33,22 @@ device (or entered manually in either app) appears live everywhere else.
   ID), not scoped to a single login. Any staff account can see any
   patient's full history across visits — this is a clinic tool, not a
   per-household app like the project's earlier iteration was.
+  `patient_auth_user_id` optionally links a patient's own login (see
+  "Account roles" below); null until they self-link.
+- **Account roles** — three kinds of signed-in principal, distinguished by
+  `is_device()` / `is_patient()` / `is_staff()` in `schema.sql`:
+  - **staff** (default) — full read/write on `patients`; staff-or-device
+    read/write on `test_sessions`.
+  - **device** — one per ESP32 unit (`devices` table), can create/update
+    `test_sessions` only.
+  - **patient** — self-signup in the web dashboard, role stored in Supabase
+    Auth `user_metadata.role`. Links to their own `patients` row by
+    entering their `patient_code` once (RLS policy "patients: patient
+    self-link"); after that, read-only access to their own patient record
+    and their own `test_sessions` rows. Cannot insert/update/delete
+    anything. The web dashboard (`index.html`) shows a trimmed read-only
+    portal for this role (`body.patient-mode`) instead of the full staff
+    shell.
 - **`test_sessions`** — one row per breath test:
   - `tube_nh3` / `ambient_nh3` → `corrected_nh3` (generated column:
     tube − ambient)
