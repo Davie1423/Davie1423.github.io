@@ -568,7 +568,3 @@ main{
 .auth-error{color:#B14B36;font-size:12.5px;margin:-6px 0 14px;text-align:left;line-height:1.55;}
 .auth-switch{margin-top:18px;font-size:13px;color:var(--muted);}
 .auth-switch .link{color:var(--forest-light);font-weight:600;margin-left:4px;cursor:pointer;}
-
-/* role-based nav: patients get a read-only portal, staff get the full dashboard */
-body.patient-mode .staff-only{display:none !important;}
-body:not(.patient-mode) .patient-only{display:none !important;}

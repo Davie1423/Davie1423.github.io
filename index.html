@@ -28,17 +28,6 @@
       <label>รหัสผ่าน</label>
       <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <div class="field" style="text-align:left;display:none;" id="authRoleField">
-      <label>ประเภทบัญชี</label>
-      <select id="authRole" onchange="onAuthRoleChange()">
-        <option value="staff">เจ้าหน้าที่ (Staff)</option>
-        <option value="patient">ผู้ป่วย (Patient)</option>
-      </select>
-    </div>
-    <div class="field" style="text-align:left;display:none;" id="authPatientCodeField">
-      <label>รหัสผู้ป่วยของคุณ</label>
-      <input type="text" id="authPatientCode" placeholder="เช่น CKD-0042">
-    </div>
     <div class="auth-error" id="authError" style="display:none;"></div>
     <button class="btn btn-primary btn-block" id="authSubmitBtn" onclick="handleAuthSubmit()">เข้าสู่ระบบ</button>
     <div class="auth-switch">
@@ -69,17 +58,13 @@
   <div class="body-row">
 
     <div class="sidebar">
-      <button class="side-btn active staff-only" data-view="home" onclick="goTo('home')">
+      <button class="side-btn active" data-view="home" onclick="goTo('home')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
         หน้าหลัก
       </button>
-      <button class="side-btn staff-only" data-view="patients" onclick="goTo('patients')">
+      <button class="side-btn" data-view="patients" onclick="goTo('patients')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 19c1.2-3.5 4-4.5 6.5-4.5s5.3 1 6.5 4.5"/><circle cx="17" cy="8" r="2.5"/><path d="M16 14c2.4.2 4 1.4 4.8 3.7"/></svg>
         ผู้ป่วย
-      </button>
-      <button class="side-btn patient-only active" data-view="patient" onclick="goToMyResults()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
-        ผลตรวจของฉัน
       </button>
       <button class="side-btn" data-view="account" onclick="goTo('account')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5 7-5s5.5 1 7 5"/></svg>
@@ -134,7 +119,7 @@
 
       <!-- ============ PATIENT DETAIL ============ -->
       <div class="view" id="view-patient">
-        <button class="back-link staff-only" onclick="goTo('patients')">← กลับไปหน้าผู้ป่วย</button>
+        <button class="back-link" onclick="goTo('patients')">← กลับไปหน้าผู้ป่วย</button>
         <div class="card" style="padding:20px;margin-top:12px;">
           <div class="patient-head">
             <div class="avatar" id="patientAvatar" style="background:var(--forest);">—</div>
@@ -150,24 +135,10 @@
           <div id="patientChartHolder"></div>
         </div>
 
-        <button class="btn btn-ghost btn-block mt-2 staff-only" onclick="openSessionModal()">+ บันทึกผลด้วยตนเอง (ไม่มีอุปกรณ์)</button>
+        <button class="btn btn-ghost btn-block mt-2" onclick="openSessionModal()">+ บันทึกผลด้วยตนเอง (ไม่มีอุปกรณ์)</button>
 
         <div class="section-title">ประวัติการตรวจ</div>
         <div class="list" id="patientSessionsList"></div>
-      </div>
-
-      <!-- ============ PATIENT LINK (no record yet) ============ -->
-      <div class="view" id="view-patient-link">
-        <div class="card" style="padding:20px;margin-top:12px;">
-          <h3 style="margin-top:0;">เชื่อมบัญชีผู้ป่วยของคุณ</h3>
-          <p style="font-size:13px;color:var(--muted);line-height:1.6;">กรอกรหัสผู้ป่วยที่เจ้าหน้าที่ให้ไว้ เพื่อดูผลตรวจของคุณ</p>
-          <div class="field" style="text-align:left;">
-            <label>รหัสผู้ป่วย (Patient ID)</label>
-            <input type="text" id="linkPatientCodeInput" placeholder="เช่น CKD-0042">
-          </div>
-          <div class="auth-error" id="linkPatientError" style="display:none;"></div>
-          <button class="btn btn-primary btn-block" onclick="submitPatientLink()">เชื่อมบัญชี</button>
-        </div>
       </div>
 
       <!-- ============ SESSION RESULT ============ -->
@@ -205,17 +176,13 @@
   </div>
 
   <div class="bottomnav">
-    <button class="nav-btn active staff-only" data-view="home" onclick="goTo('home')">
+    <button class="nav-btn active" data-view="home" onclick="goTo('home')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
       <span>หน้าหลัก</span>
     </button>
-    <button class="nav-btn staff-only" data-view="patients" onclick="goTo('patients')">
+    <button class="nav-btn" data-view="patients" onclick="goTo('patients')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 19c1.2-3.5 4-4.5 6.5-4.5s5.3 1 6.5 4.5"/><circle cx="17" cy="8" r="2.5"/><path d="M16 14c2.4.2 4 1.4 4.8 3.7"/></svg>
       <span>ผู้ป่วย</span>
-    </button>
-    <button class="nav-btn patient-only active" data-view="patient" onclick="goToMyResults()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
-      <span>ผลตรวจของฉัน</span>
     </button>
     <button class="nav-btn" data-view="account" onclick="goTo('account')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5 7-5s5.5 1 7 5"/></svg>
@@ -308,8 +275,6 @@ let realtimeChannels = [];
 
 let state = {
   view: 'home',
-  role: null,
-  myPatientId: null,
   patients: [],
   recentSessions: [],
   patientSessions: [],
@@ -441,21 +406,13 @@ let authMode = 'login';
 
 function toggleAuthMode(){
   authMode = authMode === 'login' ? 'signup' : 'login';
-  document.getElementById('authTitle').textContent = authMode==='login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+  document.getElementById('authTitle').textContent = authMode==='login' ? 'เข้าสู่ระบบเจ้าหน้าที่' : 'สมัครสมาชิกเจ้าหน้าที่';
   document.getElementById('authSubmitBtn').textContent = authMode==='login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
   document.getElementById('authSwitchText').textContent = authMode==='login' ? 'ยังไม่มีบัญชี?' : 'มีบัญชีอยู่แล้ว?';
   document.getElementById('authSwitchLink').textContent = authMode==='login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
-  document.getElementById('authRoleField').style.display = authMode==='signup' ? 'block' : 'none';
-  document.getElementById('authPatientCodeField').style.display =
-    (authMode==='signup' && document.getElementById('authRole').value==='patient') ? 'block' : 'none';
   const err = document.getElementById('authError');
   err.style.display='none';
   err.style.color = '#B14B36';
-}
-
-function onAuthRoleChange(){
-  const isPatient = document.getElementById('authRole').value === 'patient';
-  document.getElementById('authPatientCodeField').style.display = isPatient ? 'block' : 'none';
 }
 
 async function handleAuthSubmit(){
@@ -471,27 +428,9 @@ async function handleAuthSubmit(){
     return;
   }
 
-  if(authMode==='login'){
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if(error){
-      errEl.textContent = error.message;
-      errEl.style.display='block';
-    }
-    return;
-  }
-
-  const role = document.getElementById('authRole').value;
-  let patientCode = '';
-  if(role === 'patient'){
-    patientCode = document.getElementById('authPatientCode').value.trim();
-    if(!patientCode){
-      errEl.textContent = 'กรุณากรอกรหัสผู้ป่วยของคุณ';
-      errEl.style.display='block';
-      return;
-    }
-  }
-
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { role } } });
+  const { error } = authMode==='login'
+    ? await sb.auth.signInWithPassword({ email, password })
+    : await sb.auth.signUp({ email, password });
 
   if(error){
     errEl.textContent = error.message;
@@ -499,13 +438,9 @@ async function handleAuthSubmit(){
     return;
   }
 
-  if(role === 'patient'){
-    localStorage.setItem('nb_pending_patient_code', patientCode);
-  }
-
-  if(!data.session){
+  if(authMode==='signup'){
     errEl.style.color = 'var(--forest)';
-    errEl.textContent = 'สมัครสำเร็จ กรุณายืนยันอีเมลก่อน แล้วเข้าสู่ระบบ (หากเปิดใช้งานอยู่)';
+    errEl.textContent = 'สมัครสำเร็จ กรุณาเข้าสู่ระบบ (หรือยืนยันอีเมลก่อน หากเปิดใช้งานอยู่)';
     errEl.style.display='block';
   }
 }
@@ -521,16 +456,12 @@ sb.auth.onAuthStateChange((event, sessionObj)=>{
     document.getElementById('appShell').style.display='flex';
     if(!booted){
       booted = true;
-      state.role = session.user.user_metadata && session.user.user_metadata.role === 'patient' ? 'patient' : 'staff';
-      document.body.classList.toggle('patient-mode', state.role === 'patient');
-      if(state.role === 'patient') bootPatient();
-      else boot();
+      boot();
     }
   } else {
     booted = false;
-    document.body.classList.remove('patient-mode');
     teardownRealtime();
-    state = { view:'home', role:null, myPatientId:null, patients:[], recentSessions:[], patientSessions:[], liveSessions:[], selectedPatientId:null, selectedSessionId:null, selectedPatient:null, selectedSession:null };
+    state = { view:'home', patients:[], recentSessions:[], patientSessions:[], liveSessions:[], selectedPatientId:null, selectedSessionId:null, selectedPatient:null, selectedSession:null };
     document.getElementById('authScreen').style.display='flex';
     document.getElementById('appShell').style.display='none';
   }
@@ -543,69 +474,6 @@ async function boot(){
   subscribeRealtime();
   document.getElementById('accountEmail').textContent = session.user.email;
   goTo('home');
-}
-
-/* =========================================================
-   PATIENT PORTAL (read-only self-service)
-========================================================= */
-async function linkPatientCode(code, silent){
-  const { data, error } = await sb.from('patients')
-    .update({ patient_auth_user_id: session.user.id })
-    .eq('patient_code', code.toUpperCase().trim())
-    .is('patient_auth_user_id', null)
-    .select().single();
-  if(error || !data){
-    if(!silent) showToast('ไม่พบรหัสผู้ป่วยนี้ หรือมีการเชื่อมบัญชีแล้ว');
-    return false;
-  }
-  if(!silent) showToast('เชื่อมบัญชีสำเร็จ');
-  return true;
-}
-
-async function bootPatient(){
-  document.getElementById('accountEmail').textContent = session.user.email;
-
-  const pending = localStorage.getItem('nb_pending_patient_code');
-  if(pending){
-    await linkPatientCode(pending, true);
-    localStorage.removeItem('nb_pending_patient_code');
-  }
-
-  const { data } = await sb.from('patients').select('*').eq('patient_auth_user_id', session.user.id).maybeSingle();
-  if(!data){
-    showPatientLinkForm();
-    return;
-  }
-
-  state.myPatientId = data.id;
-  state.patients = [data];
-  state.selectedPatientId = data.id;
-  state.selectedPatient = data;
-  await loadPatientSessions(data.id);
-  subscribeRealtime();
-  goTo('patient', { id: data.id });
-}
-
-function showPatientLinkForm(){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-patient-link').classList.add('active');
-}
-
-async function submitPatientLink(){
-  const code = document.getElementById('linkPatientCodeInput').value.trim();
-  const errEl = document.getElementById('linkPatientError');
-  errEl.style.display='none';
-  if(!code){
-    errEl.textContent = 'กรุณากรอกรหัสผู้ป่วย';
-    errEl.style.display='block';
-    return;
-  }
-  const ok = await linkPatientCode(code, false);
-  if(ok) await bootPatient();
-}
-
-function goToMyResults(){
-  if(state.myPatientId) goTo('patient', { id: state.myPatientId });
 }
 
 /* =========================================================
