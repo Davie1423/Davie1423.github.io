@@ -35,6 +35,9 @@ create table if not exists public.patients (
   sex           text check (sex in ('male', 'female', 'other')),
   birth_year    int,
   created_by    uuid references auth.users(id),
+  -- set once a patient signs up and links their own account via patient_code
+  -- (see "patients: patient self-link" policy below).
+  patient_auth_user_id uuid unique references auth.users(id) on delete set null,
   created_at    timestamptz not null default now()
 );
 
@@ -226,12 +229,22 @@ as $$
   );
 $$;
 
+-- a patient's own login (see patients.patient_auth_user_id); role is carried
+-- in auth user_metadata, set at signup time by the web app.
+create or replace function public.is_patient()
+returns boolean
+language sql
+stable
+as $$
+  select coalesce((auth.jwt() -> 'user_metadata' ->> 'role') = 'patient', false);
+$$;
+
 create or replace function public.is_staff()
 returns boolean
 language sql
 stable
 as $$
-  select auth.uid() is not null and not public.is_device();
+  select auth.uid() is not null and not public.is_device() and not public.is_patient();
 $$;
 
 -- ============================================================
@@ -247,14 +260,33 @@ create policy "devices: staff manage" on public.devices
 create policy "patients: staff manage" on public.patients
   for all using (public.is_staff()) with check (public.is_staff());
 
--- any signed-in principal (staff or device) can read/create/update sessions;
--- only staff can delete, so a compromised device credential can't erase data.
-create policy "test_sessions: signed-in can read" on public.test_sessions
-  for select using (auth.uid() is not null);
-create policy "test_sessions: signed-in can insert" on public.test_sessions
-  for insert with check (auth.uid() is not null);
-create policy "test_sessions: signed-in can update" on public.test_sessions
-  for update using (auth.uid() is not null) with check (auth.uid() is not null);
+-- a patient can see their own linked record...
+create policy "patients: own record select" on public.patients
+  for select using (patient_auth_user_id = auth.uid());
+
+-- ...and can claim an unlinked record once, by patient_code, at signup.
+create policy "patients: patient self-link" on public.patients
+  for update
+  using (public.is_patient() and patient_auth_user_id is null)
+  with check (patient_auth_user_id = auth.uid());
+
+-- staff/device have full read/write; a patient can only read their own
+-- sessions (via the patients link above) and can never insert/update/delete.
+create policy "test_sessions: read access" on public.test_sessions
+  for select using (
+    public.is_staff()
+    or public.is_device()
+    or exists (
+      select 1 from public.patients p
+      where p.id = test_sessions.patient_id
+        and p.patient_auth_user_id = auth.uid()
+    )
+  );
+create policy "test_sessions: staff or device can insert" on public.test_sessions
+  for insert with check (public.is_staff() or public.is_device());
+create policy "test_sessions: staff or device can update" on public.test_sessions
+  for update using (public.is_staff() or public.is_device())
+  with check (public.is_staff() or public.is_device());
 create policy "test_sessions: staff can delete" on public.test_sessions
   for delete using (public.is_staff());
 
